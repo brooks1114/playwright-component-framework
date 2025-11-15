@@ -1,0 +1,1213 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\fireb\\repo\\playwright-component-framework\\playwright.config.ts",
+    "rootDir": "C:/Users/fireb/repo/playwright-component-framework/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "C:/Users/fireb/repo/playwright-component-framework/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/fireb/repo/playwright-component-framework/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.(spec|test)\\.ts/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/fireb/repo/playwright-component-framework/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/fireb/repo/playwright-component-framework/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.(spec|test)\\.ts/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/fireb/repo/playwright-component-framework/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/fireb/repo/playwright-component-framework/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/.*\\.(spec|test)\\.ts/"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "unit\\button-base.spec.ts",
+      "file": "unit/button-base.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "ButtonBase",
+          "file": "unit/button-base.spec.ts",
+          "line": 106,
+          "column": 6,
+          "specs": [
+            {
+              "title": "basic click / hover / focus / blur / typing / getters",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11833,
+                      "error": {
+                        "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+                        "stack": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at ButtonBase.click (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:31:24)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:121:18",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 24,
+                          "line": 31
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:31\n\n\u001b[0m \u001b[90m 29 |\u001b[39m \u001b[90m   */\u001b[39m\n \u001b[90m 30 |\u001b[39m   \u001b[36masync\u001b[39m click(options\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mParameters\u001b[39m\u001b[33m<\u001b[39m\u001b[33mLocator\u001b[39m[\u001b[32m\"click\"\u001b[39m]\u001b[33m>\u001b[39m[\u001b[35m0\u001b[39m])\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick(options)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m   }\n \u001b[90m 34 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 24,
+                            "line": 31
+                          },
+                          "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:31\n\n\u001b[0m \u001b[90m 29 |\u001b[39m \u001b[90m   */\u001b[39m\n \u001b[90m 30 |\u001b[39m   \u001b[36masync\u001b[39m click(options\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mParameters\u001b[39m\u001b[33m<\u001b[39m\u001b[33mLocator\u001b[39m[\u001b[32m\"click\"\u001b[39m]\u001b[33m>\u001b[39m[\u001b[35m0\u001b[39m])\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick(options)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m   }\n \u001b[90m 34 |\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.click (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:31:24)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:121:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:36.567Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-58cad-r-focus-blur-typing-getters-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-58cad-r-focus-blur-typing-getters-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-58cad-r-focus-blur-typing-getters-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 24,
+                        "line": 31
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-0347414970c5850e5069",
+              "file": "unit/button-base.spec.ts",
+              "line": 107,
+              "column": 7
+            },
+            {
+              "title": "assertions: text, visibility, enabled/disabled, aria, role, accessible name/description, class",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 6283,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#test-button')\nTimeout: 5000ms\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Save\u001b[39m\n\u001b[31m+\u001b[39m\n\u001b[31m+         Save\u001b[39m\n\u001b[31m+         Loading\u001b[39m\n\u001b[31m+ \u001b[43m      \u001b[49m\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    9 × locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m        Save\u001b[22m\n\u001b[2m        Loading\u001b[22m\n\u001b[2m      \"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#test-button')\nTimeout: 5000ms\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Save\u001b[39m\n\u001b[31m+\u001b[39m\n\u001b[31m+         Save\u001b[39m\n\u001b[31m+         Loading\u001b[39m\n\u001b[31m+ \u001b[43m      \u001b[49m\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    9 × locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m        Save\u001b[22m\n\u001b[2m        Loading\u001b[22m\n\u001b[2m      \"\u001b[22m\n\n    at ButtonBase.shouldHaveText (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:166:32)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:154:18",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 32,
+                          "line": 166
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:166\n\n\u001b[0m \u001b[90m 164 |\u001b[39m   \u001b[90m/** Assert button has exact text. */\u001b[39m\n \u001b[90m 165 |\u001b[39m   \u001b[36masync\u001b[39m shouldHaveText(expected\u001b[33m:\u001b[39m string \u001b[33m|\u001b[39m \u001b[33mRegExp\u001b[39m)\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 166 |\u001b[39m     \u001b[36mawait\u001b[39m expect(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator)\u001b[33m.\u001b[39mtoHaveText(expected)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 167 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 168 |\u001b[39m   }\n \u001b[90m 169 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 32,
+                            "line": 166
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#test-button')\nTimeout: 5000ms\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Save\u001b[39m\n\u001b[31m+\u001b[39m\n\u001b[31m+         Save\u001b[39m\n\u001b[31m+         Loading\u001b[39m\n\u001b[31m+ \u001b[43m      \u001b[49m\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    9 × locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m        Save\u001b[22m\n\u001b[2m        Loading\u001b[22m\n\u001b[2m      \"\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:166\n\n\u001b[0m \u001b[90m 164 |\u001b[39m   \u001b[90m/** Assert button has exact text. */\u001b[39m\n \u001b[90m 165 |\u001b[39m   \u001b[36masync\u001b[39m shouldHaveText(expected\u001b[33m:\u001b[39m string \u001b[33m|\u001b[39m \u001b[33mRegExp\u001b[39m)\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 166 |\u001b[39m     \u001b[36mawait\u001b[39m expect(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator)\u001b[33m.\u001b[39mtoHaveText(expected)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 167 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 168 |\u001b[39m   }\n \u001b[90m 169 |\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.shouldHaveText (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:166:32)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:154:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:36.583Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-877b5-ible-name-description-class-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-877b5-ible-name-description-class-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-877b5-ible-name-description-class-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 32,
+                        "line": 166
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-d132721fec65b37e5798",
+              "file": "unit/button-base.spec.ts",
+              "line": 146,
+              "column": 7
+            },
+            {
+              "title": "clickAndNavigate waits for response",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 11705,
+                      "error": {
+                        "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+                        "stack": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at ButtonBase.clickAndNavigate (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:48:20)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:198:18",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 20,
+                          "line": 48
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:48\n\n\u001b[0m \u001b[90m 46 |\u001b[39m         \u001b[33m.\u001b[39mpage()\n \u001b[90m 47 |\u001b[39m         \u001b[33m.\u001b[39mwaitForEvent(\u001b[32m\"response\"\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m options\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mtimeout \u001b[33m?\u001b[39m\u001b[33m?\u001b[39m \u001b[35m30\u001b[39m_000 })\u001b[33m,\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m       \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick()\u001b[33m,\u001b[39m\n \u001b[90m    |\u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     ])\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m     \u001b[36mawait\u001b[39m response\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mfinished()\u001b[33m;\u001b[39m\n \u001b[90m 51 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 20,
+                            "line": 48
+                          },
+                          "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:48\n\n\u001b[0m \u001b[90m 46 |\u001b[39m         \u001b[33m.\u001b[39mpage()\n \u001b[90m 47 |\u001b[39m         \u001b[33m.\u001b[39mwaitForEvent(\u001b[32m\"response\"\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m options\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mtimeout \u001b[33m?\u001b[39m\u001b[33m?\u001b[39m \u001b[35m30\u001b[39m_000 })\u001b[33m,\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m       \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick()\u001b[33m,\u001b[39m\n \u001b[90m    |\u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     ])\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m     \u001b[36mawait\u001b[39m response\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mfinished()\u001b[33m;\u001b[39m\n \u001b[90m 51 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.clickAndNavigate (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:48:20)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:198:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:36.557Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-9f3e1-Navigate-waits-for-response-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-9f3e1-Navigate-waits-for-response-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-9f3e1-Navigate-waits-for-response-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 20,
+                        "line": 48
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-e7143c77d58e64b74be2",
+              "file": "unit/button-base.spec.ts",
+              "line": 183,
+              "column": 7
+            },
+            {
+              "title": "clickAndWaitForNewPage returns the new Page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 1107,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:36.568Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-e0af0c782adb905deda1",
+              "file": "unit/button-base.spec.ts",
+              "line": 204,
+              "column": 7
+            },
+            {
+              "title": "waitUntilEnabled and waitUntilDisabled",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 407,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:38.475Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-5164bb47dd3cd158e6d1",
+              "file": "unit/button-base.spec.ts",
+              "line": 225,
+              "column": 7
+            },
+            {
+              "title": "isLoading with default and custom spinner selectors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 216,
+                      "error": {
+                        "message": "Error: locator.isVisible: Error: strict mode violation: locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]') resolved to 2 elements:\n    1) <span class=\"spinner\">Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n    2) <span hidden=\"\" aria-busy=\"true\" class=\"alt-spinner\">Alt Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n\nCall log:\n\u001b[2m    - checking visibility of locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]')\u001b[22m\n",
+                        "stack": "Error: locator.isVisible: Error: strict mode violation: locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]') resolved to 2 elements:\n    1) <span class=\"spinner\">Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n    2) <span hidden=\"\" aria-busy=\"true\" class=\"alt-spinner\">Alt Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n\nCall log:\n\u001b[2m    - checking visibility of locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]')\u001b[22m\n\n    at ButtonBase.isLoading (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:305:26)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:294:41",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 26,
+                          "line": 305
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:305\n\n\u001b[0m \u001b[90m 303 |\u001b[39m   )\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[33mboolean\u001b[39m\u001b[33m>\u001b[39m {\n \u001b[90m 304 |\u001b[39m     \u001b[36mconst\u001b[39m spinner \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mlocator(spinnerSelector)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 305 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mawait\u001b[39m spinner\u001b[33m.\u001b[39misVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 306 |\u001b[39m   }\n \u001b[90m 307 |\u001b[39m }\n \u001b[90m 308 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 26,
+                            "line": 305
+                          },
+                          "message": "Error: locator.isVisible: Error: strict mode violation: locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]') resolved to 2 elements:\n    1) <span class=\"spinner\">Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n    2) <span hidden=\"\" aria-busy=\"true\" class=\"alt-spinner\">Alt Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n\nCall log:\n\u001b[2m    - checking visibility of locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]')\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:305\n\n\u001b[0m \u001b[90m 303 |\u001b[39m   )\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[33mboolean\u001b[39m\u001b[33m>\u001b[39m {\n \u001b[90m 304 |\u001b[39m     \u001b[36mconst\u001b[39m spinner \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mlocator(spinnerSelector)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 305 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mawait\u001b[39m spinner\u001b[33m.\u001b[39misVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 306 |\u001b[39m   }\n \u001b[90m 307 |\u001b[39m }\n \u001b[90m 308 |\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.isLoading (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:305:26)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:294:41\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:38.915Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-3c9a9-nd-custom-spinner-selectors-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-3c9a9-nd-custom-spinner-selectors-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-3c9a9-nd-custom-spinner-selectors-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 26,
+                        "line": 305
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-be35fa5ab164f5d289b6",
+              "file": "unit/button-base.spec.ts",
+              "line": 263,
+              "column": 7
+            },
+            {
+              "title": "basic click / hover / focus / blur / typing / getters",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 11707,
+                      "error": {
+                        "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+                        "stack": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at ButtonBase.click (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:31:24)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:121:18",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 24,
+                          "line": 31
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:31\n\n\u001b[0m \u001b[90m 29 |\u001b[39m \u001b[90m   */\u001b[39m\n \u001b[90m 30 |\u001b[39m   \u001b[36masync\u001b[39m click(options\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mParameters\u001b[39m\u001b[33m<\u001b[39m\u001b[33mLocator\u001b[39m[\u001b[32m\"click\"\u001b[39m]\u001b[33m>\u001b[39m[\u001b[35m0\u001b[39m])\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick(options)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m   }\n \u001b[90m 34 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 24,
+                            "line": 31
+                          },
+                          "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:31\n\n\u001b[0m \u001b[90m 29 |\u001b[39m \u001b[90m   */\u001b[39m\n \u001b[90m 30 |\u001b[39m   \u001b[36masync\u001b[39m click(options\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mParameters\u001b[39m\u001b[33m<\u001b[39m\u001b[33mLocator\u001b[39m[\u001b[32m\"click\"\u001b[39m]\u001b[33m>\u001b[39m[\u001b[35m0\u001b[39m])\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick(options)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m   }\n \u001b[90m 34 |\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.click (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:31:24)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:121:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:40.256Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-58cad-r-focus-blur-typing-getters-firefox\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-58cad-r-focus-blur-typing-getters-firefox\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-58cad-r-focus-blur-typing-getters-firefox\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 24,
+                        "line": 31
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-eb6ddb1bd28caf357787",
+              "file": "unit/button-base.spec.ts",
+              "line": 107,
+              "column": 7
+            },
+            {
+              "title": "assertions: text, visibility, enabled/disabled, aria, role, accessible name/description, class",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 6154,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#test-button')\nTimeout: 5000ms\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Save\u001b[39m\n\u001b[31m+\u001b[39m\n\u001b[31m+         Save\u001b[39m\n\u001b[31m+         Loading\u001b[39m\n\u001b[31m+ \u001b[43m      \u001b[49m\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    9 × locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m        Save\u001b[22m\n\u001b[2m        Loading\u001b[22m\n\u001b[2m      \"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#test-button')\nTimeout: 5000ms\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Save\u001b[39m\n\u001b[31m+\u001b[39m\n\u001b[31m+         Save\u001b[39m\n\u001b[31m+         Loading\u001b[39m\n\u001b[31m+ \u001b[43m      \u001b[49m\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    9 × locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m        Save\u001b[22m\n\u001b[2m        Loading\u001b[22m\n\u001b[2m      \"\u001b[22m\n\n    at ButtonBase.shouldHaveText (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:166:32)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:154:18",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 32,
+                          "line": 166
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:166\n\n\u001b[0m \u001b[90m 164 |\u001b[39m   \u001b[90m/** Assert button has exact text. */\u001b[39m\n \u001b[90m 165 |\u001b[39m   \u001b[36masync\u001b[39m shouldHaveText(expected\u001b[33m:\u001b[39m string \u001b[33m|\u001b[39m \u001b[33mRegExp\u001b[39m)\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 166 |\u001b[39m     \u001b[36mawait\u001b[39m expect(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator)\u001b[33m.\u001b[39mtoHaveText(expected)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 167 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 168 |\u001b[39m   }\n \u001b[90m 169 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 32,
+                            "line": 166
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#test-button')\nTimeout: 5000ms\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Save\u001b[39m\n\u001b[31m+\u001b[39m\n\u001b[31m+         Save\u001b[39m\n\u001b[31m+         Loading\u001b[39m\n\u001b[31m+ \u001b[43m      \u001b[49m\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    9 × locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m        Save\u001b[22m\n\u001b[2m        Loading\u001b[22m\n\u001b[2m      \"\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:166\n\n\u001b[0m \u001b[90m 164 |\u001b[39m   \u001b[90m/** Assert button has exact text. */\u001b[39m\n \u001b[90m 165 |\u001b[39m   \u001b[36masync\u001b[39m shouldHaveText(expected\u001b[33m:\u001b[39m string \u001b[33m|\u001b[39m \u001b[33mRegExp\u001b[39m)\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 166 |\u001b[39m     \u001b[36mawait\u001b[39m expect(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator)\u001b[33m.\u001b[39mtoHaveText(expected)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 167 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 168 |\u001b[39m   }\n \u001b[90m 169 |\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.shouldHaveText (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:166:32)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:154:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:44.777Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-877b5-ible-name-description-class-firefox\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-877b5-ible-name-description-class-firefox\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-877b5-ible-name-description-class-firefox\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 32,
+                        "line": 166
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-c45393f05ae004102e14",
+              "file": "unit/button-base.spec.ts",
+              "line": 146,
+              "column": 7
+            },
+            {
+              "title": "clickAndNavigate waits for response",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 11501,
+                      "error": {
+                        "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+                        "stack": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at ButtonBase.clickAndNavigate (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:48:20)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:198:18",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 20,
+                          "line": 48
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:48\n\n\u001b[0m \u001b[90m 46 |\u001b[39m         \u001b[33m.\u001b[39mpage()\n \u001b[90m 47 |\u001b[39m         \u001b[33m.\u001b[39mwaitForEvent(\u001b[32m\"response\"\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m options\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mtimeout \u001b[33m?\u001b[39m\u001b[33m?\u001b[39m \u001b[35m30\u001b[39m_000 })\u001b[33m,\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m       \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick()\u001b[33m,\u001b[39m\n \u001b[90m    |\u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     ])\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m     \u001b[36mawait\u001b[39m response\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mfinished()\u001b[33m;\u001b[39m\n \u001b[90m 51 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 20,
+                            "line": 48
+                          },
+                          "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:48\n\n\u001b[0m \u001b[90m 46 |\u001b[39m         \u001b[33m.\u001b[39mpage()\n \u001b[90m 47 |\u001b[39m         \u001b[33m.\u001b[39mwaitForEvent(\u001b[32m\"response\"\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m options\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mtimeout \u001b[33m?\u001b[39m\u001b[33m?\u001b[39m \u001b[35m30\u001b[39m_000 })\u001b[33m,\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m       \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick()\u001b[33m,\u001b[39m\n \u001b[90m    |\u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     ])\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m     \u001b[36mawait\u001b[39m response\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mfinished()\u001b[33m;\u001b[39m\n \u001b[90m 51 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.clickAndNavigate (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:48:20)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:198:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:50.254Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-9f3e1-Navigate-waits-for-response-firefox\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-9f3e1-Navigate-waits-for-response-firefox\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-9f3e1-Navigate-waits-for-response-firefox\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 20,
+                        "line": 48
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-a644ec53ef1bbb905958",
+              "file": "unit/button-base.spec.ts",
+              "line": 183,
+              "column": 7
+            },
+            {
+              "title": "clickAndWaitForNewPage returns the new Page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1895,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:50.342Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-edad1a5cb7bcba6b03d8",
+              "file": "unit/button-base.spec.ts",
+              "line": 204,
+              "column": 7
+            },
+            {
+              "title": "waitUntilEnabled and waitUntilDisabled",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2071,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:54.477Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-ce0ccaf43bc39a57bf02",
+              "file": "unit/button-base.spec.ts",
+              "line": 225,
+              "column": 7
+            },
+            {
+              "title": "isLoading with default and custom spinner selectors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 699,
+                      "error": {
+                        "message": "Error: locator.isVisible: Error: strict mode violation: locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]') resolved to 2 elements:\n    1) <span class=\"spinner\">Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n    2) <span hidden=\"\" aria-busy=\"true\" class=\"alt-spinner\">Alt Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n\nCall log:\n\u001b[2m    - checking visibility of locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]')\u001b[22m\n",
+                        "stack": "Error: locator.isVisible: Error: strict mode violation: locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]') resolved to 2 elements:\n    1) <span class=\"spinner\">Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n    2) <span hidden=\"\" aria-busy=\"true\" class=\"alt-spinner\">Alt Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n\nCall log:\n\u001b[2m    - checking visibility of locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]')\u001b[22m\n\n    at ButtonBase.isLoading (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:305:26)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:294:41",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 26,
+                          "line": 305
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:305\n\n\u001b[0m \u001b[90m 303 |\u001b[39m   )\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[33mboolean\u001b[39m\u001b[33m>\u001b[39m {\n \u001b[90m 304 |\u001b[39m     \u001b[36mconst\u001b[39m spinner \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mlocator(spinnerSelector)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 305 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mawait\u001b[39m spinner\u001b[33m.\u001b[39misVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 306 |\u001b[39m   }\n \u001b[90m 307 |\u001b[39m }\n \u001b[90m 308 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 26,
+                            "line": 305
+                          },
+                          "message": "Error: locator.isVisible: Error: strict mode violation: locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]') resolved to 2 elements:\n    1) <span class=\"spinner\">Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n    2) <span hidden=\"\" aria-busy=\"true\" class=\"alt-spinner\">Alt Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n\nCall log:\n\u001b[2m    - checking visibility of locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]')\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:305\n\n\u001b[0m \u001b[90m 303 |\u001b[39m   )\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[33mboolean\u001b[39m\u001b[33m>\u001b[39m {\n \u001b[90m 304 |\u001b[39m     \u001b[36mconst\u001b[39m spinner \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mlocator(spinnerSelector)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 305 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mawait\u001b[39m spinner\u001b[33m.\u001b[39misVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 306 |\u001b[39m   }\n \u001b[90m 307 |\u001b[39m }\n \u001b[90m 308 |\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.isLoading (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:305:26)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:294:41\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:53.358Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-3c9a9-nd-custom-spinner-selectors-firefox\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-3c9a9-nd-custom-spinner-selectors-firefox\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-3c9a9-nd-custom-spinner-selectors-firefox\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 26,
+                        "line": 305
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-639197552cc813c3ffd5",
+              "file": "unit/button-base.spec.ts",
+              "line": 263,
+              "column": 7
+            },
+            {
+              "title": "basic click / hover / focus / blur / typing / getters",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 11216,
+                      "error": {
+                        "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    14 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+                        "stack": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    14 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at ButtonBase.click (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:31:24)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:121:18",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 24,
+                          "line": 31
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:31\n\n\u001b[0m \u001b[90m 29 |\u001b[39m \u001b[90m   */\u001b[39m\n \u001b[90m 30 |\u001b[39m   \u001b[36masync\u001b[39m click(options\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mParameters\u001b[39m\u001b[33m<\u001b[39m\u001b[33mLocator\u001b[39m[\u001b[32m\"click\"\u001b[39m]\u001b[33m>\u001b[39m[\u001b[35m0\u001b[39m])\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick(options)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m   }\n \u001b[90m 34 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 24,
+                            "line": 31
+                          },
+                          "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    14 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:31\n\n\u001b[0m \u001b[90m 29 |\u001b[39m \u001b[90m   */\u001b[39m\n \u001b[90m 30 |\u001b[39m   \u001b[36masync\u001b[39m click(options\u001b[33m?\u001b[39m\u001b[33m:\u001b[39m \u001b[33mParameters\u001b[39m\u001b[33m<\u001b[39m\u001b[33mLocator\u001b[39m[\u001b[32m\"click\"\u001b[39m]\u001b[33m>\u001b[39m[\u001b[35m0\u001b[39m])\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 31 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick(options)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 32 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 33 |\u001b[39m   }\n \u001b[90m 34 |\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.click (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:31:24)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:121:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:55.684Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-58cad-r-focus-blur-typing-getters-webkit\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-58cad-r-focus-blur-typing-getters-webkit\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-58cad-r-focus-blur-typing-getters-webkit\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 24,
+                        "line": 31
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-4bd3d26b752f9c28cc76",
+              "file": "unit/button-base.spec.ts",
+              "line": 107,
+              "column": 7
+            },
+            {
+              "title": "assertions: text, visibility, enabled/disabled, aria, role, accessible name/description, class",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 5613,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#test-button')\nTimeout: 5000ms\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Save\u001b[39m\n\u001b[31m+\u001b[39m\n\u001b[31m+         Save\u001b[39m\n\u001b[31m+         Loading\u001b[39m\n\u001b[31m+ \u001b[43m      \u001b[49m\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    9 × locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m        Save\u001b[22m\n\u001b[2m        Loading\u001b[22m\n\u001b[2m      \"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#test-button')\nTimeout: 5000ms\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Save\u001b[39m\n\u001b[31m+\u001b[39m\n\u001b[31m+         Save\u001b[39m\n\u001b[31m+         Loading\u001b[39m\n\u001b[31m+ \u001b[43m      \u001b[49m\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    9 × locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m        Save\u001b[22m\n\u001b[2m        Loading\u001b[22m\n\u001b[2m      \"\u001b[22m\n\n    at ButtonBase.shouldHaveText (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:166:32)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:154:18",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 32,
+                          "line": 166
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:166\n\n\u001b[0m \u001b[90m 164 |\u001b[39m   \u001b[90m/** Assert button has exact text. */\u001b[39m\n \u001b[90m 165 |\u001b[39m   \u001b[36masync\u001b[39m shouldHaveText(expected\u001b[33m:\u001b[39m string \u001b[33m|\u001b[39m \u001b[33mRegExp\u001b[39m)\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 166 |\u001b[39m     \u001b[36mawait\u001b[39m expect(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator)\u001b[33m.\u001b[39mtoHaveText(expected)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 167 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 168 |\u001b[39m   }\n \u001b[90m 169 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 32,
+                            "line": 166
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#test-button')\nTimeout: 5000ms\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Save\u001b[39m\n\u001b[31m+\u001b[39m\n\u001b[31m+         Save\u001b[39m\n\u001b[31m+         Loading\u001b[39m\n\u001b[31m+ \u001b[43m      \u001b[49m\u001b[39m\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    9 × locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m      - unexpected value \"\u001b[22m\n\u001b[2m        Save\u001b[22m\n\u001b[2m        Loading\u001b[22m\n\u001b[2m      \"\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:166\n\n\u001b[0m \u001b[90m 164 |\u001b[39m   \u001b[90m/** Assert button has exact text. */\u001b[39m\n \u001b[90m 165 |\u001b[39m   \u001b[36masync\u001b[39m shouldHaveText(expected\u001b[33m:\u001b[39m string \u001b[33m|\u001b[39m \u001b[33mRegExp\u001b[39m)\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[36mthis\u001b[39m\u001b[33m>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 166 |\u001b[39m     \u001b[36mawait\u001b[39m expect(\u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator)\u001b[33m.\u001b[39mtoHaveText(expected)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 167 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 168 |\u001b[39m   }\n \u001b[90m 169 |\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.shouldHaveText (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:166:32)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:154:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:56.954Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-877b5-ible-name-description-class-webkit\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-877b5-ible-name-description-class-webkit\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-877b5-ible-name-description-class-webkit\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 32,
+                        "line": 166
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-abea5b1b56cf075a7974",
+              "file": "unit/button-base.spec.ts",
+              "line": 146,
+              "column": 7
+            },
+            {
+              "title": "clickAndNavigate waits for response",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 10370,
+                      "error": {
+                        "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    14 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+                        "stack": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    14 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at ButtonBase.clickAndNavigate (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:48:20)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:198:18",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 20,
+                          "line": 48
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:48\n\n\u001b[0m \u001b[90m 46 |\u001b[39m         \u001b[33m.\u001b[39mpage()\n \u001b[90m 47 |\u001b[39m         \u001b[33m.\u001b[39mwaitForEvent(\u001b[32m\"response\"\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m options\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mtimeout \u001b[33m?\u001b[39m\u001b[33m?\u001b[39m \u001b[35m30\u001b[39m_000 })\u001b[33m,\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m       \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick()\u001b[33m,\u001b[39m\n \u001b[90m    |\u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     ])\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m     \u001b[36mawait\u001b[39m response\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mfinished()\u001b[33m;\u001b[39m\n \u001b[90m 51 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 20,
+                            "line": 48
+                          },
+                          "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#test-button')\u001b[22m\n\u001b[2m    - locator resolved to <button value=\"Save\" type=\"submit\" role=\"button\" id=\"test-button\" class=\"btn primary\" aria-disabled=\"true\" aria-label=\"Save changes\" aria-description=\"Submits the form\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    14 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:48\n\n\u001b[0m \u001b[90m 46 |\u001b[39m         \u001b[33m.\u001b[39mpage()\n \u001b[90m 47 |\u001b[39m         \u001b[33m.\u001b[39mwaitForEvent(\u001b[32m\"response\"\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m options\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mtimeout \u001b[33m?\u001b[39m\u001b[33m?\u001b[39m \u001b[35m30\u001b[39m_000 })\u001b[33m,\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 48 |\u001b[39m       \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mclick()\u001b[33m,\u001b[39m\n \u001b[90m    |\u001b[39m                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 49 |\u001b[39m     ])\u001b[33m;\u001b[39m\n \u001b[90m 50 |\u001b[39m     \u001b[36mawait\u001b[39m response\u001b[33m?\u001b[39m\u001b[33m.\u001b[39mfinished()\u001b[33m;\u001b[39m\n \u001b[90m 51 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.clickAndNavigate (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:48:20)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:198:18\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:20:58.972Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-9f3e1-Navigate-waits-for-response-webkit\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-9f3e1-Navigate-waits-for-response-webkit\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-9f3e1-Navigate-waits-for-response-webkit\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 20,
+                        "line": 48
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-ed804c455e5014a5a333",
+              "file": "unit/button-base.spec.ts",
+              "line": 183,
+              "column": 7
+            },
+            {
+              "title": "clickAndWaitForNewPage returns the new Page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5616,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:21:03.949Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-4e3cf4c3dfbf551a130a",
+              "file": "unit/button-base.spec.ts",
+              "line": 204,
+              "column": 7
+            },
+            {
+              "title": "waitUntilEnabled and waitUntilDisabled",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 920,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:21:04.052Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-a386f01972aad96bfc6e",
+              "file": "unit/button-base.spec.ts",
+              "line": 225,
+              "column": 7
+            },
+            {
+              "title": "isLoading with default and custom spinner selectors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 636,
+                      "error": {
+                        "message": "Error: locator.isVisible: Error: strict mode violation: locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]') resolved to 2 elements:\n    1) <span class=\"spinner\">Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n    2) <span hidden=\"\" aria-busy=\"true\" class=\"alt-spinner\">Alt Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n\nCall log:\n\u001b[2m    - checking visibility of locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]')\u001b[22m\n",
+                        "stack": "Error: locator.isVisible: Error: strict mode violation: locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]') resolved to 2 elements:\n    1) <span class=\"spinner\">Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n    2) <span hidden=\"\" aria-busy=\"true\" class=\"alt-spinner\">Alt Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n\nCall log:\n\u001b[2m    - checking visibility of locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]')\u001b[22m\n\n    at ButtonBase.isLoading (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:305:26)\n    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:294:41",
+                        "location": {
+                          "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                          "column": 26,
+                          "line": 305
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:305\n\n\u001b[0m \u001b[90m 303 |\u001b[39m   )\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[33mboolean\u001b[39m\u001b[33m>\u001b[39m {\n \u001b[90m 304 |\u001b[39m     \u001b[36mconst\u001b[39m spinner \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mlocator(spinnerSelector)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 305 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mawait\u001b[39m spinner\u001b[33m.\u001b[39misVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 306 |\u001b[39m   }\n \u001b[90m 307 |\u001b[39m }\n \u001b[90m 308 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                            "column": 26,
+                            "line": 305
+                          },
+                          "message": "Error: locator.isVisible: Error: strict mode violation: locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]') resolved to 2 elements:\n    1) <span class=\"spinner\">Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n    2) <span hidden=\"\" aria-busy=\"true\" class=\"alt-spinner\">Alt Loading</span> aka getByRole('button', { name: 'Click me Loading' })\n\nCall log:\n\u001b[2m    - checking visibility of locator('#loading-button').locator('.spinner, [aria-busy=\"true\"]')\u001b[22m\n\n\n\u001b[90m   at \u001b[39m..\\src\\components\\bases\\button-base.ts:305\n\n\u001b[0m \u001b[90m 303 |\u001b[39m   )\u001b[33m:\u001b[39m \u001b[33mPromise\u001b[39m\u001b[33m<\u001b[39m\u001b[33mboolean\u001b[39m\u001b[33m>\u001b[39m {\n \u001b[90m 304 |\u001b[39m     \u001b[36mconst\u001b[39m spinner \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mlocator\u001b[33m.\u001b[39mlocator(spinnerSelector)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 305 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mawait\u001b[39m spinner\u001b[33m.\u001b[39misVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 306 |\u001b[39m   }\n \u001b[90m 307 |\u001b[39m }\n \u001b[90m 308 |\u001b[39m\u001b[0m\n\u001b[2m    at ButtonBase.isLoading (C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts:305:26)\u001b[22m\n\u001b[2m    at C:\\Users\\fireb\\repo\\playwright-component-framework\\tests\\unit\\button-base.spec.ts:294:41\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-11-14T22:21:05.041Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-3c9a9-nd-custom-spinner-selectors-webkit\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-3c9a9-nd-custom-spinner-selectors-webkit\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\fireb\\repo\\playwright-component-framework\\test-results\\unit-button-base-ButtonBas-3c9a9-nd-custom-spinner-selectors-webkit\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\Users\\fireb\\repo\\playwright-component-framework\\src\\components\\bases\\button-base.ts",
+                        "column": 26,
+                        "line": 305
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c93837299a7dc70643c2-8c84ea4fc46a83fdac82",
+              "file": "unit/button-base.spec.ts",
+              "line": 263,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-11-14T22:20:35.164Z",
+    "duration": 34605.805,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 12,
+    "flaky": 0
+  }
+}

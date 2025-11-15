@@ -1,0 +1,12 @@
+{
+    "make": "Toyota",
+    "model": "Camry",
+    "year": "2023",
+    "color": "White",
+    "vin": "4T1BF1FK0DU123456",
+    "mileage": "15,200",
+    "fuelType": "Gasoline",
+    "transmission": "Automatic",
+    "engine": "2.5L 4-Cylinder",
+    "driveType": "FWD"
+}
