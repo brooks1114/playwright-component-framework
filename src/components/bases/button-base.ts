@@ -7,6 +7,10 @@ import { Page, Locator, expect } from "@playwright/test";
  * All methods that talk to the page or use Playwright's async expect()
  * are async and return `this` for chaining, unless noted otherwise.
  *
+ * Construction:
+ *  - new ButtonBase(page, 'button[type="submit"]');
+ *  - new ButtonBase(page.getByRole('button', { name: 'Save' }));
+ *
  * @example
  * const button = new ButtonBase(page, 'button[type="submit"]');
  * await button.click();
@@ -17,8 +21,24 @@ import { Page, Locator, expect } from "@playwright/test";
 export class ButtonBase {
   readonly locator: Locator;
 
-  constructor(page: Page, selector: string) {
-    this.locator = page.locator(selector);
+  // === CONSTRUCTORS (overloads) ===
+
+  /**
+   * Construct from a Page and a selector string (CSS/xpath/etc).
+   */
+  constructor(page: Page, selector: string);
+  /**
+   * Construct directly from an existing Locator (e.g., page.getByRole()).
+   */
+  constructor(locator: Locator);
+  constructor(pageOrLocator: Page | Locator, selector?: string) {
+    if (selector !== undefined) {
+      // Usage: new ButtonBase(page, 'button[type="submit"]')
+      this.locator = (pageOrLocator as Page).locator(selector);
+    } else {
+      // Usage: new ButtonBase(page.getByRole('button', { name: 'Save' }))
+      this.locator = pageOrLocator as Locator;
+    }
   }
 
   // === CLICK ACTIONS (async) ===

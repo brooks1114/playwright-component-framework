@@ -17,7 +17,7 @@ export default defineConfig({
     headless: true,
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
-    video: "retain-on-failure",
+    video: "off",
     trace: "on-first-retry",
 
     // Screenshot on failure

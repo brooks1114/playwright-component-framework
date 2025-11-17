@@ -1,3 +1,4 @@
+// components/bases/radio-base.ts
 import { Page, Locator, expect } from "@playwright/test";
 
 /**
@@ -12,6 +13,10 @@ import { Page, Locator, expect } from "@playwright/test";
  * All methods that talk to the page or use Playwright's async expect()
  * are async and return `this` for chaining, unless noted otherwise.
  *
+ * Construction:
+ *  - new RadioBase(page, 'input[name="role"][value="admin"]');
+ *  - new RadioBase(page.getByLabel('Admin'));
+ *
  * @example
  * const radio = new RadioBase(page, 'input[name="role"][value="admin"]');
  * await radio.check();
@@ -20,8 +25,24 @@ import { Page, Locator, expect } from "@playwright/test";
 export class RadioBase {
   readonly locator: Locator;
 
-  constructor(page: Page, selector: string) {
-    this.locator = page.locator(selector);
+  // === CONSTRUCTORS (overloads) ===
+
+  /**
+   * Construct from a Page and a selector string (CSS/xpath/etc).
+   */
+  constructor(page: Page, selector: string);
+  /**
+   * Construct directly from an existing Locator (e.g., page.getByLabel()).
+   */
+  constructor(locator: Locator);
+  constructor(pageOrLocator: Page | Locator, selector?: string) {
+    if (selector !== undefined) {
+      // Usage: new RadioBase(page, 'input[name="role"][value="admin"]')
+      this.locator = (pageOrLocator as Page).locator(selector);
+    } else {
+      // Usage: new RadioBase(page.getByLabel('Admin'))
+      this.locator = pageOrLocator as Locator;
+    }
   }
 
   // === WAIT & STATE ===

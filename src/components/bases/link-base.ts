@@ -8,6 +8,10 @@ import { Page, Locator, expect } from "@playwright/test";
  * All methods that talk to the page or use Playwright's async expect()
  * are async and return `this` for chaining, unless noted otherwise.
  *
+ * Construction:
+ *  - new LinkBase(page, 'a[href="/dashboard"]');
+ *  - new LinkBase(page.getByRole('link', { name: 'Dashboard' }));
+ *
  * @example
  * const link = new LinkBase(page, 'a[href="/dashboard"]');
  * await link.clickAndNavigate();
@@ -17,8 +21,24 @@ import { Page, Locator, expect } from "@playwright/test";
 export class LinkBase {
   readonly locator: Locator;
 
-  constructor(page: Page, selector: string) {
-    this.locator = page.locator(selector);
+  // === CONSTRUCTORS (overloads) ===
+
+  /**
+   * Construct from a Page and a selector string (CSS/xpath/etc).
+   */
+  constructor(page: Page, selector: string);
+  /**
+   * Construct directly from an existing Locator (e.g., page.getByRole()).
+   */
+  constructor(locator: Locator);
+  constructor(pageOrLocator: Page | Locator, selector?: string) {
+    if (selector !== undefined) {
+      // Usage: new LinkBase(page, 'a[href="/dashboard"]')
+      this.locator = (pageOrLocator as Page).locator(selector);
+    } else {
+      // Usage: new LinkBase(page.getByRole('link', { name: 'Dashboard' }))
+      this.locator = pageOrLocator as Locator;
+    }
   }
 
   // === NAVIGATION & CLICK ACTIONS ===

@@ -1,4 +1,4 @@
-import { Page, expect } from "@playwright/test";
+import { Page, Locator, expect } from "@playwright/test";
 import { InputBase } from "./input-base";
 
 /**
@@ -12,14 +12,34 @@ import { InputBase } from "./input-base";
  * it's focused on the underlying input value. You can extend it
  * later if your app uses a custom calendar UI.
  *
+ * Construction:
+ *  - new DatePickerBase(page, '#startDate');
+ *  - new DatePickerBase(page.getByLabel('Start date'));
+ *
  * @example
  * const datePicker = new DatePickerBase(page, '#startDate');
  * await datePicker.setDate(new Date(2025, 0, 1)); // Jan 1, 2025
  * await datePicker.shouldHaveDate(new Date(2025, 0, 1));
  */
 export class DatePickerBase extends InputBase {
-  constructor(page: Page, selector: string) {
-    super(page, selector);
+  // === CONSTRUCTORS (overloads) ===
+
+  /**
+   * Construct from a Page and a selector string (CSS/xpath/etc).
+   */
+  constructor(page: Page, selector: string);
+  /**
+   * Construct directly from an existing Locator (e.g., page.getByLabel()).
+   */
+  constructor(locator: Locator);
+  constructor(pageOrLocator: Page | Locator, selector?: string) {
+    if (selector !== undefined) {
+      // Usage: new DatePickerBase(page, '#startDate')
+      super(pageOrLocator as Page, selector);
+    } else {
+      // Usage: new DatePickerBase(page.getByLabel('Start date'))
+      super(pageOrLocator as Locator);
+    }
   }
 
   // === INTERNAL HELPERS ===

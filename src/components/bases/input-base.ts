@@ -7,6 +7,10 @@ import { Page, Locator, expect } from "@playwright/test";
  * All methods that talk to the page or use Playwright's async expect()
  * are async and return `this` for chaining, unless noted otherwise.
  *
+ * Construction:
+ *  - new InputBase(page, '#email');
+ *  - new InputBase(page.getByLabel('Email'));
+ *
  * @example
  * const input = new InputBase(page, '#email');
  * await input.fill('hello@example.com');
@@ -17,8 +21,24 @@ import { Page, Locator, expect } from "@playwright/test";
 export class InputBase {
   readonly locator: Locator;
 
-  constructor(page: Page, selector: string) {
-    this.locator = page.locator(selector);
+  // === CONSTRUCTORS (overloads) ===
+
+  /**
+   * Construct from a Page and a selector string (CSS/xpath/etc).
+   */
+  constructor(page: Page, selector: string);
+  /**
+   * Construct directly from an existing Locator (e.g., page.getByLabel()).
+   */
+  constructor(locator: Locator);
+  constructor(pageOrLocator: Page | Locator, selector?: string) {
+    if (selector !== undefined) {
+      // Usage: new InputBase(page, '#email')
+      this.locator = (pageOrLocator as Page).locator(selector);
+    } else {
+      // Usage: new InputBase(page.getByLabel('Email'))
+      this.locator = pageOrLocator as Locator;
+    }
   }
 
   // === INPUT ACTIONS (async) ===
@@ -37,14 +57,18 @@ export class InputBase {
 
   /**
    * Clear the input and type new text (simulates user typing).
+   *
+   * Uses Locator.pressSequentially() under the hood (Playwright's
+   * recommended replacement for the deprecated Locator.type()).
+   *
    * @param text Text to type.
    */
   async type(
     text: string,
-    options?: Parameters<Locator["type"]>[1]
+    options?: Parameters<Locator["pressSequentially"]>[1]
   ): Promise<this> {
     await this.locator.clear();
-    await this.locator.type(text, options);
+    await this.locator.pressSequentially(text, options);
     return this;
   }
 
@@ -87,6 +111,7 @@ export class InputBase {
 
   /** Get the current input value. */
   async getValue(): Promise<string> {
+    // locator.inputValue() always returns a string, but we keep ?? "" for safety.
     return (await this.locator.inputValue()) ?? "";
   }
 
@@ -210,9 +235,18 @@ export class InputBase {
     return this;
   }
 
-  /** Assert input is required. */
+  /** Assert input is required (HTML required or ARIA-required). */
   async shouldBeRequired(): Promise<this> {
-    await expect(this.locator).toHaveAttribute("required", "");
+    // Covers <input required> and <input required="true">
+    await expect(this.locator).toHaveAttribute("required", /.*/);
+
+    // Many modern React forms use aria-required instead of required
+    // So we also consider aria-required="true" as "required"
+    const ariaRequired = await this.locator.getAttribute("aria-required");
+    if (ariaRequired !== null) {
+      await expect(this.locator).toHaveAttribute("aria-required", "true");
+    }
+
     return this;
   }
 

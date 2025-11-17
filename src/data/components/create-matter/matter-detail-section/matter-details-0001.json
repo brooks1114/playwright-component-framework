@@ -1,0 +1,18 @@
+{
+  "caseName": "Matter 0001",
+  "docketNumber": "Suits - Class Action",
+  "matterType": "Suits",
+  "matterSubtype": "Class Action"
+},
+{
+  "caseName": "Matter 0002",
+  "docketNumber": "NDLA - Appeal",
+  "matterType": "Non-Docket Legal Actions",
+  "matterSubtype": "Appeal"
+},
+{
+  "caseName": "Matter 0003",
+  "docketNumber": "NLA - Bad Faith",
+  "matterType": "Non-litigated Matter",
+  "matterSubtype": "Bad Faith"
+}

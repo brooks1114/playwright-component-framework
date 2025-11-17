@@ -7,6 +7,10 @@ import { Page, Locator, expect } from "@playwright/test";
  * All methods that talk to the page or use Playwright's async expect()
  * are async and return `this` for chaining, unless noted otherwise.
  *
+ * Construction:
+ *  - new DropdownBase(page, "#role");
+ *  - new DropdownBase(page.getByLabel("Role"));
+ *
  * @example
  * const dropdown = new DropdownBase(page, "#role");
  * await dropdown.selectByText("Admin");
@@ -17,8 +21,26 @@ export class DropdownBase {
   readonly locator: Locator;
   private readonly optionsLocator: Locator;
 
-  constructor(page: Page, selector: string) {
-    this.locator = page.locator(selector);
+  // === CONSTRUCTORS (overloads) ===
+
+  /**
+   * Construct from a Page and a selector string (CSS/xpath/etc).
+   */
+  constructor(page: Page, selector: string);
+  /**
+   * Construct directly from an existing Locator (e.g., page.getByLabel()).
+   * The locator should point to the <select> element (or equivalent).
+   */
+  constructor(locator: Locator);
+  constructor(pageOrLocator: Page | Locator, selector?: string) {
+    if (selector !== undefined) {
+      // Usage: new DropdownBase(page, "#role")
+      this.locator = (pageOrLocator as Page).locator(selector);
+    } else {
+      // Usage: new DropdownBase(page.getByLabel("Role"))
+      this.locator = pageOrLocator as Locator;
+    }
+
     this.optionsLocator = this.locator.locator("option");
   }
 
@@ -81,7 +103,7 @@ export class DropdownBase {
           | string
           | { value?: string; label?: string; index?: number }
         )[],
-    options?: { timeout?: number; force?: boolean }
+    options?: Parameters<Locator["selectOption"]>[1]
   ): Promise<this> {
     await this.waitFor();
     // Playwright accepts mutable arrays — safe cast for readonly arrays.

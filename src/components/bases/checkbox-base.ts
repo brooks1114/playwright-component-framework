@@ -13,6 +13,10 @@ import { Page, Locator, expect } from "@playwright/test";
  * All methods that talk to the page or use Playwright's async expect()
  * are async and return `this` for chaining, unless noted otherwise.
  *
+ * Construction:
+ *  - new CheckboxBase(page, '#terms');
+ *  - new CheckboxBase(page.getByLabel('I agree'));
+ *
  * @example
  * const checkbox = new CheckboxBase(page, '#terms');
  * await checkbox.check();
@@ -23,8 +27,24 @@ import { Page, Locator, expect } from "@playwright/test";
 export class CheckboxBase {
   readonly locator: Locator;
 
-  constructor(page: Page, selector: string) {
-    this.locator = page.locator(selector);
+  // === CONSTRUCTORS (overloads) ===
+
+  /**
+   * Construct from a Page and a selector string (CSS/xpath/etc).
+   */
+  constructor(page: Page, selector: string);
+  /**
+   * Construct directly from an existing Locator (e.g., page.getByLabel()).
+   */
+  constructor(locator: Locator);
+  constructor(pageOrLocator: Page | Locator, selector?: string) {
+    if (selector !== undefined) {
+      // Usage: new CheckboxBase(page, '#terms')
+      this.locator = (pageOrLocator as Page).locator(selector);
+    } else {
+      // Usage: new CheckboxBase(page.getByLabel('I agree'))
+      this.locator = pageOrLocator as Locator;
+    }
   }
 
   // === WAIT & STATE ===

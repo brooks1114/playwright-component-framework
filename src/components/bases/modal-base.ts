@@ -19,8 +19,14 @@ import { Page, Locator, expect } from "@playwright/test";
 export class ModalBase {
   readonly locator: Locator;
 
-  constructor(page: Page, selector: string) {
-    this.locator = page.locator(selector);
+  constructor(page: Page, selector: string);
+  constructor(locator: Locator);
+  constructor(pageOrLocator: Page | Locator, selector?: string) {
+    if (selector !== undefined) {
+      this.locator = (pageOrLocator as Page).locator(selector);
+    } else {
+      this.locator = pageOrLocator as Locator;
+    }
   }
 
   // === WAIT & STATE ===

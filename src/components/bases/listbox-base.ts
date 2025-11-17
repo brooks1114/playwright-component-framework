@@ -1,3 +1,4 @@
+// components/bases/listbox-base.ts
 import { Page, Locator, expect } from "@playwright/test";
 
 /**
@@ -11,6 +12,10 @@ import { Page, Locator, expect } from "@playwright/test";
  * All methods that talk to the page or use Playwright's async expect()
  * are async and return `this` for chaining, unless noted otherwise.
  *
+ * Construction:
+ *  - new ListBoxBase(page, '[role="listbox"]');
+ *  - new ListBoxBase(page.getByRole('listbox', { name: 'States' }));
+ *
  * @example
  * const listbox = new ListBoxBase(page, '[role="listbox"]');
  * await listbox.selectByText('Admin');
@@ -20,8 +25,25 @@ export class ListBoxBase {
   readonly locator: Locator;
   private readonly optionsLocator: Locator;
 
-  constructor(page: Page, selector: string) {
-    this.locator = page.locator(selector);
+  // === CONSTRUCTORS (overloads) ===
+
+  /**
+   * Construct from a Page and a selector string (CSS/xpath/etc).
+   */
+  constructor(page: Page, selector: string);
+  /**
+   * Construct directly from an existing Locator pointing at the listbox.
+   */
+  constructor(locator: Locator);
+  constructor(pageOrLocator: Page | Locator, selector?: string) {
+    if (selector !== undefined) {
+      // Usage: new ListBoxBase(page, '[role="listbox"]')
+      this.locator = (pageOrLocator as Page).locator(selector);
+    } else {
+      // Usage: new ListBoxBase(page.getByRole('listbox', { name: 'States' }))
+      this.locator = pageOrLocator as Locator;
+    }
+
     this.optionsLocator = this.locator.getByRole("option");
   }
 

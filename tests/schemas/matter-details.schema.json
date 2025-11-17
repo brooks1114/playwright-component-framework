@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://your-org.com/schemas/matter-details.schema.json",
+  "title": "MatterDetailsData (String-based)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "caseName": {
+      "type": "string",
+      "description": "Case name input text (name='name').",
+      "maxLength": 100
+    },
+    "docketNumber": {
+      "type": "string",
+      "description": "Case/Docket number input text (name='additionalDetails.docketNumber').",
+      "maxLength": 20
+    },
+    "matterType": {
+      "type": "string",
+      "description": "Human-friendly label from the Matter Type dropdown.",
+      "enum": ["Suits", "Non-Docket Legal Actions", "Non-Litigated Matter"]
+    },
+    "matterSubtype": {
+      "type": "string",
+      "description": "Human-friendly label from the Matter Subtype dropdown.",
+      "enum": [
+        "Regular",
+        "Bad Faith",
+        "Class Action",
+        "Collection",
+        "Court Approved",
+        "Declaratory Judgment",
+        "Recovery",
+        "Appeal",
+        "Arbitration",
+        "Attorney Fees",
+        "Construction Defect",
+        "Ins/Mtr Veh Hearing",
+        "Mediation",
+        "Pers Inj Protection",
+        "Subrogation",
+        "Uninsured Motorist",
+        "Underinsured Motorist",
+        "Defense",
+        "Complex Litigation",
+        "Multi",
+        "Dec Actions"
+      ]
+    }
+  }
+}
