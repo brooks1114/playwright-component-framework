@@ -1,7 +1,7 @@
 // scripts/update-vehicle-data.ts
 import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
-import { VEHICLE_DEFAULTS } from "../../types/vehicle-schema";
+import { VEHICLE_DEFAULTS } from "../types/vehicle-schema";
 
 const DATA_DIR = resolve(__dirname, "../data/vehicles");
 

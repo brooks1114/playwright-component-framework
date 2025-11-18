@@ -1,0 +1,20 @@
+[
+  {
+    "caseName": "Matter 0001",
+    "docketNumber": "",
+    "matterType": "Suits",
+    "matterSubtype": "Class Action"
+  },
+  {
+    "caseName": "Matter 0002",
+    "docketNumber": "",
+    "matterType": "Non-Docket Legal Actions",
+    "matterSubtype": "Appeal"
+  },
+  {
+    "caseName": "Matter 0003",
+    "docketNumber": "",
+    "matterType": "Non-Litigated Matter",
+    "matterSubtype": "Bad Faith"
+  }
+]

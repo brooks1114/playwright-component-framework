@@ -1,6 +1,8 @@
-// ──────────────────────────────────────────────────────────────
-// components/create-matter/matter-details-section.ts
-// ──────────────────────────────────────────────────────────────
+/* ============================================================================
+ * FILE: src/components/create-matter/matter-details-section.ts
+ * - Your original class, updated to import the type instead of defining it
+ * ============================================================================
+ */
 
 import { Page } from "@playwright/test";
 import { ComponentFactory } from "../factory";
@@ -16,19 +18,10 @@ import {
   MATTER_DETAILS_ERROR_MESSAGES,
   MATTER_TYPE_OPTIONS,
   MATTER_SUBTYPE_OPTIONS,
-  MatterTypeLabel,
-  MatterSubtypeLabel,
 } from "../../constants/components/create-matter/matter-details-section-constants";
 
-/**
- * Data contract for the Matter Details section (Option A – string labels).
- */
-export interface MatterDetailsData {
-  caseName?: string;
-  docketNumber?: string;
-  matterType?: MatterTypeLabel;
-  matterSubtype?: MatterSubtypeLabel;
-}
+// 🔁 NEW: import the type from the schema file instead of defining it here
+import type { MatterDetailsData } from "../../types/create-matter/matter-details-section.schema";
 
 /**
  * Semantic wrapper for the "Matter details" card on the Create Matter page.
@@ -130,21 +123,13 @@ export class MatterDetailsSection {
   // High-level regression / structure validation
   // ─────────────────────────
 
-  /**
-   * Smoke/regression validation of the Matter Details section.
-   *
-   * IMPORTANT: Only calls `.should*` / `.getText()` on base classes.
-   */
   async validateStructure(): Promise<this> {
-    // Section container
     await this.section.shouldBeVisible();
 
-    // Heading
     const heading = this.heading;
     await heading.shouldBeVisible();
     await heading.shouldHaveText(MATTER_DETAILS_LABELS.HEADING);
 
-    // Labels
     const caseNameLabel = this.caseNameLabel;
     await caseNameLabel.shouldBeVisible();
     await caseNameLabel.shouldHaveText(MATTER_DETAILS_LABELS.CASE_NAME);
@@ -167,7 +152,6 @@ export class MatterDetailsSection {
       MATTER_DETAILS_LABELS.MATTER_SUBTYPE
     );
 
-    // Case Name Input
     const caseNameInput = this.caseNameInput;
     await caseNameInput.shouldBeVisible();
     await caseNameInput.shouldBeRequired();
@@ -175,7 +159,6 @@ export class MatterDetailsSection {
       new RegExp(MATTER_DETAILS_LABELS.CASE_NAME, "i")
     );
 
-    // Docket Number Input
     const docketInput = this.docketNumberInput;
     await docketInput.shouldBeVisible();
     await docketInput.shouldBeRequired();
@@ -183,14 +166,12 @@ export class MatterDetailsSection {
       new RegExp(MATTER_DETAILS_LABELS.DOCKET_NUMBER, "i")
     );
 
-    // Matter Name Display
     const matterNameDisplay = this.matterNameDisplay;
     await matterNameDisplay.shouldBeVisible();
     if (!(await matterNameDisplay.getText())) {
       throw new Error(MATTER_DETAILS_ERROR_MESSAGES.EMPTY_MATTER_NAME_DISPLAY);
     }
 
-    // Matter Type Dropdown
     const typeDropdown = this.matterTypeDropdown;
     await typeDropdown.shouldBeVisible();
     await typeDropdown.shouldBeEnabled();
@@ -205,7 +186,6 @@ export class MatterDetailsSection {
     );
     await typeDropdown.shouldContainOption(MATTER_TYPE_OPTIONS.NON_LITIGATED);
 
-    // Matter Subtype Dropdown
     const subtypeDropdown = this.matterSubtypeDropdown;
     await subtypeDropdown.shouldBeVisible();
     await subtypeDropdown.shouldBeEnabled();
@@ -216,7 +196,7 @@ export class MatterDetailsSection {
       MATTER_DETAILS_FIELD_NAMES.MATTER_SUBTYPE
     );
 
-    await subtypeDropdown.shouldContainOption(MATTER_SUBTYPE_OPTIONS.REGULAR);
+    await subtypeDropdown.selectByText(MATTER_SUBTYPE_OPTIONS.REGULAR);
     await subtypeDropdown.shouldContainOption(MATTER_SUBTYPE_OPTIONS.BAD_FAITH);
     await subtypeDropdown.shouldContainOption(
       MATTER_SUBTYPE_OPTIONS.CLASS_ACTION

@@ -1,8 +1,8 @@
 // components/vehicle-details.component.ts
 import { Page, Locator, expect } from "@playwright/test";
 import { LOCATORS } from "../constants/locators/vehicle-details.locators";
-import type { VehicleData } from "../../types/vehicle-schema";
-import { assertValidVehicle } from "../../utils/validate-data";
+import type { VehicleData } from "../types/vehicle-schema";
+import { assertValidVehicle } from "../utils/validate-data";
 
 /**
  * Component representing the Vehicle Details section.

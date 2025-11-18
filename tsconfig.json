@@ -20,7 +20,7 @@
     "src/pages/**/*.ts",
     "src/components/**/*.ts",
     "src/constants/**/*.ts",
-    "utils/**/*.ts",
+    "src/utils/**/*.ts",
     "scripts/**/*.ts"
   ],
   "exclude": ["node_modules", "dist"]
