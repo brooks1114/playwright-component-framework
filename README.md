@@ -37,20 +37,20 @@ The project is built around three core concepts:
 Every test receives one `ComponentFactory` instance:
 
 ```ts
-const $ = new ComponentFactory(page);
+const ui = new ComponentFactory(page);
 This factory exposes type-safe access to all base components:
 
 ts
 
-$.dropdown(selector)
-$.input(selector)
-$.button(selector)
-$.link(selector)
-$.checkbox(selector)
-$.radio(selector)
-$.listbox(selector)
-$.modal(selector)
-$.datePicker(selector)
+ui.dropdown(selector)
+ui.input(selector)
+ui.button(selector)
+ui.link(selector)
+ui.checkbox(selector)
+ui.radio(selector)
+ui.listbox(selector)
+ui.modal(selector)
+ui.datePicker(selector)
 ✔ Benefits
 Eliminates duplicate new Locator(...) logic
 
@@ -89,7 +89,7 @@ Make tests expressive:
 
 ts
 
-await $.dropdown(LOCATORS.PROFILE.ROLE_DROPDOWN)
+await ui.dropdown(LOCATORS.PROFILE.ROLE_DROPDOWN)
   .selectByText("Admin")
   .shouldHaveValue(DROPDOWN.ROLE.ADMIN);
 ✔ Benefits
@@ -106,7 +106,7 @@ Provides consistent APIs across all element types
 3. Test Context Pattern (TestContext)
 A single object gives tests access to:
 
-The ComponentFactory as $
+The ComponentFactory as ui
 
 Higher-level page/feature components
 
@@ -115,12 +115,12 @@ Shared utilities or test helpers (future expansion)
 ts
 
 export class TestContext {
-  readonly $: ComponentFactory;
+  readonly ui: ComponentFactory;
   readonly vehicleDetails: VehicleDetailsComponent;
   readonly profile: ProfileComponent;
 
   constructor(page: Page) {
-    this.$ = new ComponentFactory(page);
+    this.ui = new ComponentFactory(page);
     this.vehicleDetails = new VehicleDetailsComponent(page);
     this.profile = new ProfileComponent(page);
   }
@@ -132,7 +132,7 @@ ts
 test("user updates profile", async ({ page }) => {
   const ctx = new TestContext(page);
 
-  await ctx.$.input("#email").fill("user@example.com");
+  await ctx.ui.input("#email").fill("user@example.com");
   await ctx.profile.save();
 });
 ✔ Benefits
@@ -177,7 +177,7 @@ In a test:
 
 ts
 
-await $.dropdown(LOCATORS.PROFILE.COUNTRY_DROPDOWN)
+await ui.dropdown(LOCATORS.PROFILE.COUNTRY_DROPDOWN)
   .selectByText("United States")
   .shouldHaveValue(DROPDOWN.COUNTRY.USA);
 🧪 Example End-to-End Test
@@ -190,22 +190,22 @@ import { DROPDOWN } from "../../src/constants/dropdown-values";
 import { LOCATORS } from "../../src/constants/locators/profile.locators";
 
 test("user can update their profile", async ({ page }) => {
-  const $ = new ComponentFactory(page);
+  const ui = new ComponentFactory(page);
 
   await page.goto("/profile");
 
-  await $.dropdown(LOCATORS.PROFILE.ROLE_DROPDOWN)
+  await ui.dropdown(LOCATORS.PROFILE.ROLE_DROPDOWN)
     .waitUntilReady()
     .selectByText("Admin")
     .shouldHaveValue(DROPDOWN.ROLE.ADMIN);
 
-  await $.button(LOCATORS.PROFILE.SAVE_BUTTON)
+  await ui.button(LOCATORS.PROFILE.SAVE_BUTTON)
     .shouldBeVisible()
     .shouldBeEnabled()
     .click()
     .waitUntilDisabled();
 
-  await $.link(LOCATORS.PROFILE.EDIT_LINK)
+  await ui.link(LOCATORS.PROFILE.EDIT_LINK)
     .shouldHaveText(/edit/i);
 });
 🧩 Benefits of This Framework Design
@@ -225,7 +225,7 @@ Junior developers learn the API naturally.
 🟩 2. Unmatched readability
 ts
 
-await $.input("#email").fill("test@example.com").shouldHaveValue("test@example.com");
+await ui.input("#email").fill("test@example.com").shouldHaveValue("test@example.com");
 Reads exactly like English.
 
 🟩 3. Consistency across all tests
@@ -275,19 +275,19 @@ Create your test:
 ts
 
 test("feature works", async ({ page }) => {
-  const $ = new ComponentFactory(page);
+  const ui = new ComponentFactory(page);
 
   await page.goto("/some-feature");
 
-  await $.button("#start").click();
-  await $.input("#name").fill("Erik");
-  await $.dropdown("#state").selectByText("Maine");
+  await ui.button("#start").click();
+  await ui.input("#name").fill("Erik");
+  await ui.dropdown("#state").selectByText("Maine");
 });
 Use constants for values:
 
 ts
 
-await $.dropdown(LOCATORS.PROFILE.ROLE_DROPDOWN)
+await ui.dropdown(LOCATORS.PROFILE.ROLE_DROPDOWN)
   .selectByText("Admin")
   .shouldHaveValue(DROPDOWN.ROLE.ADMIN);
 Group repeated actions into components (optional but recommended):
@@ -296,7 +296,7 @@ ts
 
 ctx.profile.updateTheme("Dark");
 🚀 Future Enhancements
-Full custom fixtures injecting $ globally
+Full custom fixtures injecting ui globally
 
 ctx Test Context injection
 

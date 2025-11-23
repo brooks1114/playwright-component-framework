@@ -1,6 +1,15 @@
 /* ============================================================================
  * FILE: src/components/create-matter/matter-details-section.ts
- * - Your original class, updated to import the type instead of defining it
+ * Semantic wrapper for the "Matter details" card on the Create Matter page.
+ *
+ * Responsibilities:
+ *  - Encapsulate locators for the Matter Details section.
+ *  - Provide high-level structure/regression checks (validateStructure).
+ *  - Provide a data-driven fill API (fillFromData) powered by Zod schema types.
+ *
+ * This class NEVER calls Playwright's expect() directly.
+ * All assertions/actions go through base classes:
+ *   SectionBase, LabelBase, ElementBase, InputBase, DropdownBase.
  * ============================================================================
  */
 
@@ -20,23 +29,25 @@ import {
   MATTER_SUBTYPE_OPTIONS,
 } from "../../constants/components/create-matter/matter-details-section-constants";
 
-// 🔁 NEW: import the type from the schema file instead of defining it here
+// Zod-backed data contract type (single source of truth lives in the schema).
 import type { MatterDetailsData } from "../../types/create-matter/matter-details-section.schema";
 
 /**
- * Semantic wrapper for the "Matter details" card on the Create Matter page.
+ * High-level, semantic wrapper around the "Matter details" section/card.
  *
- * NOTE:
- *  - This class does NOT call Playwright's expect/locators directly.
- *  - All assertions/actions go through base classes:
- *      SectionBase, LabelBase, ElementBase, InputBase, DropdownBase.
+ * Tests should prefer using this class instead of touching locators or labels:
+ *
+ *   const section = new MatterDetailsSection(page, factory);
+ *
+ *   await section.validateStructure();
+ *   await section.fillFromData(testData);
  */
 export class MatterDetailsSection {
-  /** Card/section container. */
+  /** Section/card container. All other locators are scoped within this. */
   private readonly section: SectionBase;
 
   constructor(
-    private readonly page: Page, // kept for future if needed, but not used directly
+    page: Page,
     private readonly factory: ComponentFactory
   ) {
     this.section = new SectionBase(page, MATTER_DETAILS_SELECTORS.ROOT);
@@ -46,10 +57,12 @@ export class MatterDetailsSection {
   // Headings / labels as LabelBase
   // ─────────────────────────
 
+  /** Top-level section heading (e.g. "Matter details"). */
   get heading(): LabelBase {
     return this.section.getHeadingByText(MATTER_DETAILS_LABELS.HEADING);
   }
 
+  /** "Case name" heading/label. */
   get caseNameLabel(): LabelBase {
     return new LabelBase(
       this.section.locator.getByRole("heading", {
@@ -58,6 +71,7 @@ export class MatterDetailsSection {
     );
   }
 
+  /** "Docket number" heading/label. */
   get docketNumberLabel(): LabelBase {
     return new LabelBase(
       this.section.locator.getByRole("heading", {
@@ -66,6 +80,7 @@ export class MatterDetailsSection {
     );
   }
 
+  /** "Matter name" heading/label. */
   get matterNameLabel(): LabelBase {
     return new LabelBase(
       this.section.locator.getByRole("heading", {
@@ -74,6 +89,7 @@ export class MatterDetailsSection {
     );
   }
 
+  /** "Matter type" heading/label. */
   get matterTypeLabel(): LabelBase {
     return new LabelBase(
       this.section.locator.getByRole("heading", {
@@ -82,6 +98,7 @@ export class MatterDetailsSection {
     );
   }
 
+  /** "Matter subtype" heading/label. */
   get matterSubtypeLabel(): LabelBase {
     return new LabelBase(
       this.section.locator.getByRole("heading", {
@@ -94,10 +111,12 @@ export class MatterDetailsSection {
   // Inputs / selects via factory
   // ─────────────────────────
 
+  /** Editable "Case name" input. */
   get caseNameInput(): InputBase {
     return this.factory.inputByLabel(MATTER_DETAILS_LABELS.CASE_NAME);
   }
 
+  /** Editable "Docket number" input. */
   get docketNumberInput(): InputBase {
     return this.factory.inputByLabel(MATTER_DETAILS_LABELS.DOCKET_NUMBER);
   }
@@ -111,10 +130,12 @@ export class MatterDetailsSection {
     );
   }
 
+  /** "Matter type" dropdown/select. */
   get matterTypeDropdown(): DropdownBase {
     return this.factory.dropdownByLabel(MATTER_DETAILS_LABELS.MATTER_TYPE);
   }
 
+  /** "Matter subtype" dropdown/select. */
   get matterSubtypeDropdown(): DropdownBase {
     return this.factory.dropdownByLabel(MATTER_DETAILS_LABELS.MATTER_SUBTYPE);
   }
@@ -123,9 +144,21 @@ export class MatterDetailsSection {
   // High-level regression / structure validation
   // ─────────────────────────
 
+  /**
+   * Smoke/regression validation of the Matter Details section.
+   *
+   * This is intentionally *structure-focused*:
+   *  - verifies headings/labels
+   *  - verifies required fields and accessible names
+   *  - verifies dropdown wiring and key options
+   *
+   * It is safe to call in multiple tests as a quick health check.
+   */
   async validateStructure(): Promise<this> {
+    // Section container visible
     await this.section.shouldBeVisible();
 
+    // Headings
     const heading = this.heading;
     await heading.shouldBeVisible();
     await heading.shouldHaveText(MATTER_DETAILS_LABELS.HEADING);
@@ -152,6 +185,7 @@ export class MatterDetailsSection {
       MATTER_DETAILS_LABELS.MATTER_SUBTYPE
     );
 
+    // Case Name input
     const caseNameInput = this.caseNameInput;
     await caseNameInput.shouldBeVisible();
     await caseNameInput.shouldBeRequired();
@@ -159,6 +193,7 @@ export class MatterDetailsSection {
       new RegExp(MATTER_DETAILS_LABELS.CASE_NAME, "i")
     );
 
+    // Docket Number input
     const docketInput = this.docketNumberInput;
     await docketInput.shouldBeVisible();
     await docketInput.shouldBeRequired();
@@ -166,12 +201,14 @@ export class MatterDetailsSection {
       new RegExp(MATTER_DETAILS_LABELS.DOCKET_NUMBER, "i")
     );
 
+    // Matter Name display (should not be blank)
     const matterNameDisplay = this.matterNameDisplay;
     await matterNameDisplay.shouldBeVisible();
     if (!(await matterNameDisplay.getText())) {
       throw new Error(MATTER_DETAILS_ERROR_MESSAGES.EMPTY_MATTER_NAME_DISPLAY);
     }
 
+    // Matter Type dropdown – wiring + key options
     const typeDropdown = this.matterTypeDropdown;
     await typeDropdown.shouldBeVisible();
     await typeDropdown.shouldBeEnabled();
@@ -186,6 +223,7 @@ export class MatterDetailsSection {
     );
     await typeDropdown.shouldContainOption(MATTER_TYPE_OPTIONS.NON_LITIGATED);
 
+    // Matter Subtype dropdown – wiring + a few cross-type regression checks
     const subtypeDropdown = this.matterSubtypeDropdown;
     await subtypeDropdown.shouldBeVisible();
     await subtypeDropdown.shouldBeEnabled();
@@ -196,15 +234,22 @@ export class MatterDetailsSection {
       MATTER_DETAILS_FIELD_NAMES.MATTER_SUBTYPE
     );
 
-    await subtypeDropdown.selectByText(MATTER_SUBTYPE_OPTIONS.REGULAR);
-    await subtypeDropdown.shouldContainOption(MATTER_SUBTYPE_OPTIONS.BAD_FAITH);
-    await subtypeDropdown.shouldContainOption(
-      MATTER_SUBTYPE_OPTIONS.CLASS_ACTION
+    // We deliberately "touch" a few representative values across types:
+    await subtypeDropdown.selectByText(
+      MATTER_SUBTYPE_OPTIONS.SUITS.DECLARATORY_JUDGMENT.label
     );
     await subtypeDropdown.shouldContainOption(
-      MATTER_SUBTYPE_OPTIONS.SUBROGATION
+      MATTER_SUBTYPE_OPTIONS.NON_DOCKET_LEGAL.SIU.label
     );
-    await subtypeDropdown.shouldContainOption(MATTER_SUBTYPE_OPTIONS.DEFENSE);
+    await subtypeDropdown.shouldContainOption(
+      MATTER_SUBTYPE_OPTIONS.SUITS.CLASS_ACTION.label
+    );
+    await subtypeDropdown.shouldContainOption(
+      MATTER_SUBTYPE_OPTIONS.NON_LITIGATED.SUBROGATION.label
+    );
+    await subtypeDropdown.shouldContainOption(
+      MATTER_SUBTYPE_OPTIONS.SUITS.DEFENSE.label
+    );
 
     return this;
   }
@@ -213,6 +258,16 @@ export class MatterDetailsSection {
   // Data-driven fill (JSON → form)
   // ─────────────────────────
 
+  /**
+   * Fill the section from a Zod-validated data object.
+   *
+   * - `MatterDetailsData` comes from the Zod schema (single source of truth).
+   * - All keys are optional so tests can do partial fills.
+   * - Safe against extra keys in JSON because the Zod parser strips them.
+   *
+   * Typical usage:
+   *   await matterDetails.fillFromData(testData.matterDetails);
+   */
   async fillFromData(data: MatterDetailsData): Promise<this> {
     if (data.caseName !== undefined) {
       await this.caseNameInput.fill(data.caseName);

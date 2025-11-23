@@ -1,26 +1,58 @@
+// src/components/bases/modal-base.ts
 import { Page, Locator, expect } from "@playwright/test";
 
 /**
- * Chainable base class for modal dialogs (e.g., role="dialog").
+ * ModalBase
+ * ---------
+ * Chainable base class for modal dialogs (e.g., role="dialog", "alertdialog").
  *
  * Intended to wrap the modal container element. Works best when the
- * selector points at the root dialog element (backdrop+content or content).
+ * selector/locator points at the root dialog element (backdrop+content or
+ * content container).
  *
- * All methods that talk to the page or use Playwright's async expect()
- * are async and return `this` for chaining, unless noted otherwise.
+ * Responsibilities:
+ *  - Scope: represent a single modal instance.
+ *  - Actions: focus/blur, close via Escape, scroll, screenshot.
+ *  - State: isVisible, isHidden, isOpen, isClosed.
+ *  - Assertions: visible/hidden, in viewport, role, text, a11y attributes.
+ *  - Waiters: waitUntilOpen, waitUntilClosed.
  *
- * @example
- * const modal = new ModalBase(page, '[role="dialog"]');
- * await modal.waitUntilOpen();
- * await modal.shouldBeVisible();
- * await modal.closeWithEsc();
- * await modal.waitUntilClosed();
+ * Example:
+ *   const modal = new ModalBase(page, '[role="dialog"]');
+ *
+ *   await modal
+ *     .waitUntilOpen()
+ *     .shouldBeVisible()
+ *     .shouldContainText("Are you sure?")
+ *     .closeWithEsc()
+ *     .waitUntilClosed();
  */
 export class ModalBase {
+  /** Underlying Playwright Locator for the modal container. */
   readonly locator: Locator;
 
+  // ───────────────────────────────────────────────────────────────
+  // Constructors (overloads)
+  // ───────────────────────────────────────────────────────────────
+
+  /**
+   * Construct from a Page and a selector string.
+   *
+   * @example
+   *   const modal = new ModalBase(page, '[role="dialog"]');
+   */
   constructor(page: Page, selector: string);
+
+  /**
+   * Construct directly from an existing Locator.
+   *
+   * @example
+   *   const modal = new ModalBase(
+   *     page.getByRole("dialog", { name: "Confirm delete" })
+   *   );
+   */
   constructor(locator: Locator);
+
   constructor(pageOrLocator: Page | Locator, selector?: string) {
     if (selector !== undefined) {
       this.locator = (pageOrLocator as Page).locator(selector);
@@ -29,7 +61,16 @@ export class ModalBase {
     }
   }
 
-  // === WAIT & STATE ===
+  /**
+   * Expose the underlying Locator for advanced operations.
+   */
+  asLocator(): Locator {
+    return this.locator;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Wait & state
+  // ───────────────────────────────────────────────────────────────
 
   /** Wait for modal to be visible or attached. */
   async waitFor(options?: {
@@ -48,12 +89,24 @@ export class ModalBase {
     return await this.locator.isVisible();
   }
 
-  /** Check if modal is hidden. */
+  /** Check if modal is hidden (not visible). */
   async isHidden(): Promise<boolean> {
     return !(await this.locator.isVisible());
   }
 
-  // === ACTIONS ===
+  /** Alias for isVisible, but expresses dialog semantics. */
+  async isOpen(): Promise<boolean> {
+    return await this.isVisible();
+  }
+
+  /** Alias for isHidden, but expresses dialog semantics. */
+  async isClosed(): Promise<boolean> {
+    return await this.isHidden();
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Actions
+  // ───────────────────────────────────────────────────────────────
 
   /** Focus the modal container. */
   async focus(): Promise<this> {
@@ -87,12 +140,17 @@ export class ModalBase {
 
   /**
    * Take a screenshot of just the modal.
+   *
+   * @param path Optional path to write screenshot file.
+   * @returns Screenshot buffer.
    */
   async screenshot(path?: string): Promise<Buffer> {
     return await this.locator.screenshot({ path });
   }
 
-  // === GETTERS (async) ===
+  // ───────────────────────────────────────────────────────────────
+  // Getters (async)
+  // ───────────────────────────────────────────────────────────────
 
   /** Get the visible text content of the modal. */
   async getText(): Promise<string> {
@@ -109,7 +167,14 @@ export class ModalBase {
     return await this.locator.getAttribute("aria-label");
   }
 
-  // === ASSERTIONS (async – wrap Playwright's auto-retrying expect) ===
+  /** Get a specific attribute value by name. */
+  async getAttribute(name: string): Promise<string | null> {
+    return await this.locator.getAttribute(name);
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Assertions (async – wrap Playwright's auto-retrying expect)
+  // ───────────────────────────────────────────────────────────────
 
   /** Assert modal is visible (open). */
   async shouldBeVisible(): Promise<this> {
@@ -119,6 +184,12 @@ export class ModalBase {
 
   /** Assert modal is hidden (closed or not in DOM). */
   async shouldBeHidden(): Promise<this> {
+    await expect(this.locator).toBeHidden();
+    return this;
+  }
+
+  /** Alias for shouldBeHidden (expresses dialog semantics). */
+  async shouldNotBeVisible(): Promise<this> {
     await expect(this.locator).toBeHidden();
     return this;
   }
@@ -172,7 +243,30 @@ export class ModalBase {
     return this;
   }
 
-  // === WAITERS ===
+  /** Assert modal has specific class or matches a class pattern. */
+  async shouldHaveClass(expected: string | RegExp): Promise<this> {
+    await expect(this.locator).toHaveClass(expected);
+    return this;
+  }
+
+  /** Assert modal has a specific attribute and value. */
+  async shouldHaveAttribute(
+    name: string,
+    value: string | RegExp
+  ): Promise<this> {
+    await expect(this.locator).toHaveAttribute(name, value);
+    return this;
+  }
+
+  /** Assert modal does *not* have the given attribute. */
+  async shouldNotHaveAttribute(name: string): Promise<this> {
+    await expect(this.locator).not.toHaveAttribute(name, /.*/);
+    return this;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Waiters
+  // ───────────────────────────────────────────────────────────────
 
   /** Wait until modal is visible (open). */
   async waitUntilOpen(timeout = 10_000): Promise<this> {
@@ -183,6 +277,15 @@ export class ModalBase {
   /** Wait until modal is hidden (closed). */
   async waitUntilClosed(timeout = 10_000): Promise<this> {
     await expect(this.locator).toBeHidden({ timeout });
+    return this;
+  }
+
+  /** Wait until modal text matches/contains the expected value. */
+  async waitForText(
+    expected: string | RegExp,
+    timeout = 10_000
+  ): Promise<this> {
+    await expect(this.locator).toHaveText(expected, { timeout });
     return this;
   }
 }

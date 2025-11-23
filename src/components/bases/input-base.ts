@@ -1,51 +1,90 @@
+// src/components/bases/input-base.ts
 import { Page, Locator, expect } from "@playwright/test";
 
 /**
- * Chainable, type-safe base class for <input>, <textarea>, and contenteditable elements.
- * Wraps Playwright locator actions, input methods, attributes, and assertions.
+ * InputBase
+ * ---------
+ * Chainable, type-safe base class for:
+ *  - <input>
+ *  - <textarea>
+ *  - contenteditable elements
  *
- * All methods that talk to the page or use Playwright's async expect()
- * are async and return `this` for chaining, unless noted otherwise.
+ * This wraps a Playwright Locator and provides:
+ *  - Input helpers (fill, type, clear, press, focus/blur)
+ *  - State queries (isVisible, isDisabled, isReadonly, isRequired)
+ *  - Getters (value, placeholder, type, attributes)
+ *  - File helpers (uploadFile, dropFile for <input type="file">)
+ *  - Assertions (shouldHaveValue, shouldBeEmpty, shouldBeRequired, etc.)
+ *  - Waiters (waitUntilReady, waitForValue)
  *
- * Construction:
- *  - new InputBase(page, '#email');
- *  - new InputBase(page.getByLabel('Email'));
+ * Construction patterns:
+ *  - Selector-based (legacy / fallback):
+ *      const input = new InputBase(page, "#email");
+ *  - Locator-based (preferred, used by ComponentFactory):
+ *      const input = new InputBase(page.getByLabel("Email"));
  *
- * @example
- * const input = new InputBase(page, '#email');
- * await input.fill('hello@example.com');
- * await input.clear();
- * await input.shouldHaveValue('hello@example.com');
- * await input.shouldBeEmpty();
+ * Example usage in a test with your ComponentFactory:
+ *
+ *   const ui = new ComponentFactory(page);
+ *   const caseNameInput = ui.inputByLabel("Case name");
+ *
+ *   await caseNameInput
+ *     .shouldBeVisible()
+ *     .shouldBeRequired()
+ *     .fill("Matter 0001")
+ *     .shouldHaveValue("Matter 0001");
  */
 export class InputBase {
+  /** Underlying Playwright Locator for this input / textarea / contenteditable. */
   readonly locator: Locator;
 
-  // === CONSTRUCTORS (overloads) ===
+  // ───────────────────────────────────────────────────────────────
+  // Constructors (overloads)
+  // ───────────────────────────────────────────────────────────────
 
   /**
    * Construct from a Page and a selector string (CSS/xpath/etc).
+   *
+   * @example
+   *   const input = new InputBase(page, "#email");
    */
   constructor(page: Page, selector: string);
+
   /**
    * Construct directly from an existing Locator (e.g., page.getByLabel()).
+   *
+   * @example
+   *   const input = new InputBase(page.getByLabel("Email"));
    */
   constructor(locator: Locator);
+
   constructor(pageOrLocator: Page | Locator, selector?: string) {
     if (selector !== undefined) {
-      // Usage: new InputBase(page, '#email')
+      // Usage: new InputBase(page, "#email")
       this.locator = (pageOrLocator as Page).locator(selector);
     } else {
-      // Usage: new InputBase(page.getByLabel('Email'))
+      // Usage: new InputBase(page.getByLabel("Email"))
       this.locator = pageOrLocator as Locator;
     }
   }
 
-  // === INPUT ACTIONS (async) ===
+  /**
+   * Expose the underlying Locator for advanced operations.
+   */
+  asLocator(): Locator {
+    return this.locator;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Input actions (async)
+  // ───────────────────────────────────────────────────────────────
 
   /**
-   * Fill the input with text. Overwrites current value.
-   * @param text Text to fill.
+   * Fill the input with text. Overwrites the current value.
+   *
+   * Uses Playwright's locator.fill() which:
+   *  - waits for the element to be visible & editable
+   *  - selects existing text and replaces it
    */
   async fill(
     text: string,
@@ -60,8 +99,6 @@ export class InputBase {
    *
    * Uses Locator.pressSequentially() under the hood (Playwright's
    * recommended replacement for the deprecated Locator.type()).
-   *
-   * @param text Text to type.
    */
   async type(
     text: string,
@@ -81,7 +118,7 @@ export class InputBase {
   }
 
   /**
-   * Press a key (e.g., 'Enter', 'Tab').
+   * Press a key (e.g., "Enter", "Tab").
    */
   async press(
     key: string,
@@ -107,22 +144,48 @@ export class InputBase {
     return this;
   }
 
-  // === GETTERS (async) ===
+  // ───────────────────────────────────────────────────────────────
+  // Getters / state queries (async)
+  // ───────────────────────────────────────────────────────────────
 
-  /** Get the current input value. */
+  /**
+   * Get the current input value.
+   *
+   * - For <input> / <textarea>, returns the "value".
+   * - For contenteditable elements, falls back to innerText.
+   */
   async getValue(): Promise<string> {
-    // locator.inputValue() always returns a string, but we keep ?? "" for safety.
-    return (await this.locator.inputValue()) ?? "";
+    return await this.locator.evaluate((el) => {
+      const anyEl = el as any;
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        return el.value ?? "";
+      }
+      if ((el as HTMLElement).isContentEditable) {
+        return (el as HTMLElement).innerText ?? "";
+      }
+      // Fallback: try inputValue logic
+      return anyEl.value ?? "";
+    });
   }
 
-  /** Get the placeholder text. */
+  /** Get the placeholder text, if present. */
   async getPlaceholder(): Promise<string | null> {
     return await this.locator.getAttribute("placeholder");
   }
 
-  /** Get the input type (e.g., 'text', 'email'). */
+  /** Get the input type (e.g., "text", "email"), if present. */
   async getType(): Promise<string | null> {
     return await this.locator.getAttribute("type");
+  }
+
+  /** Get the name attribute, if present. */
+  async getName(): Promise<string | null> {
+    return await this.locator.getAttribute("name");
+  }
+
+  /** Get a specific attribute value. */
+  async getAttribute(name: string): Promise<string | null> {
+    return await this.locator.getAttribute(name);
   }
 
   /** Check if input is readonly. */
@@ -134,7 +197,8 @@ export class InputBase {
   /** Check if input is required. */
   async isRequired(): Promise<boolean> {
     const required = await this.locator.getAttribute("required");
-    return required !== null;
+    const ariaRequired = await this.locator.getAttribute("aria-required");
+    return required !== null || ariaRequired === "true";
   }
 
   /** Check if input is disabled. */
@@ -147,7 +211,15 @@ export class InputBase {
     return await this.locator.isVisible();
   }
 
-  // === ACTIONS (advanced) ===
+  /** Check if the input's value is empty. */
+  async isEmpty(): Promise<boolean> {
+    const value = await this.getValue();
+    return value === "";
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Advanced actions
+  // ───────────────────────────────────────────────────────────────
 
   /**
    * Select all text in the input/textarea.
@@ -172,7 +244,8 @@ export class InputBase {
   }
 
   /**
-   * Trigger the browser file chooser and drop a file (for dropzones or custom file inputs).
+   * Trigger the browser file chooser and drop a file
+   * (for dropzones or custom file inputs).
    */
   async dropFile(path: string): Promise<this> {
     const [fileChooser] = await Promise.all([
@@ -183,7 +256,9 @@ export class InputBase {
     return this;
   }
 
-  // === ASSERTIONS (async – wrap Playwright's auto-retrying expect) ===
+  // ───────────────────────────────────────────────────────────────
+  // Assertions (async – wrap Playwright's auto-retrying expect)
+  // ───────────────────────────────────────────────────────────────
 
   /** Assert input has exact value (string or RegExp). */
   async shouldHaveValue(expected: string | RegExp): Promise<this> {
@@ -217,6 +292,12 @@ export class InputBase {
     return this;
   }
 
+  /** Assert input is not visible (alias for hidden). */
+  async shouldNotBeVisible(): Promise<this> {
+    await expect(this.locator).toBeHidden();
+    return this;
+  }
+
   /** Assert input is enabled. */
   async shouldBeEnabled(): Promise<this> {
     await expect(this.locator).toBeEnabled();
@@ -235,14 +316,24 @@ export class InputBase {
     return this;
   }
 
-  /** Assert input is required (HTML required or ARIA-required). */
+  /**
+   * Assert input is required (HTML required or ARIA-required).
+   *
+   * This covers:
+   *  - <input required>
+   *  - <input required="true">
+   *  - <input aria-required="true">
+   */
   async shouldBeRequired(): Promise<this> {
-    // Covers <input required> and <input required="true">
-    await expect(this.locator).toHaveAttribute("required", /.*/);
-
-    // Many modern React forms use aria-required instead of required
-    // So we also consider aria-required="true" as "required"
+    const required = await this.locator.getAttribute("required");
     const ariaRequired = await this.locator.getAttribute("aria-required");
+
+    if (required === null && ariaRequired === null) {
+      throw new Error(
+        "Expected input to be required, but neither 'required' nor 'aria-required' are set."
+      );
+    }
+
     if (ariaRequired !== null) {
       await expect(this.locator).toHaveAttribute("aria-required", "true");
     }
@@ -283,7 +374,7 @@ export class InputBase {
   /**
    * Assert input intersects the viewport.
    *
-   * @param options.ratio 0–1: how much of the element must be visible.
+   * @param options.ratio   0–1: how much of the element must be visible.
    * @param options.timeout Assertion timeout override (optional).
    */
   async shouldBeInViewport(options?: {
@@ -308,7 +399,24 @@ export class InputBase {
     return this;
   }
 
-  // === WAITERS ===
+  /** Assert input has a specific attribute and value. */
+  async shouldHaveAttribute(
+    name: string,
+    value: string | RegExp
+  ): Promise<this> {
+    await expect(this.locator).toHaveAttribute(name, value);
+    return this;
+  }
+
+  /** Assert input does *not* have a given attribute. */
+  async shouldNotHaveAttribute(name: string): Promise<this> {
+    await expect(this.locator).not.toHaveAttribute(name, /.*/);
+    return this;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Waiters
+  // ───────────────────────────────────────────────────────────────
 
   /** Wait for input to be visible and enabled. */
   async waitUntilReady(timeout = 10_000): Promise<this> {
@@ -326,7 +434,23 @@ export class InputBase {
     return this;
   }
 
-  // === UTILITIES ===
+  /** Wait for the input to become empty. */
+  async waitUntilEmpty(timeout = 10_000): Promise<this> {
+    await expect(this.locator).toHaveValue("", { timeout });
+    return this;
+  }
+
+  /** Wait for the input to become non-empty. */
+  async waitUntilNotEmpty(timeout = 10_000): Promise<this> {
+    await expect
+      .poll(async () => (await this.getValue()) !== "", { timeout })
+      .toBe(true);
+    return this;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Utilities
+  // ───────────────────────────────────────────────────────────────
 
   /** Scroll input into view. */
   async scrollIntoView(): Promise<this> {
@@ -334,7 +458,12 @@ export class InputBase {
     return this;
   }
 
-  /** Take a screenshot of just the input. */
+  /**
+   * Take a screenshot of just the input.
+   *
+   * @param path Optional path; if provided, writes screenshot to disk.
+   * @returns The screenshot Buffer.
+   */
   async screenshot(path?: string): Promise<Buffer> {
     return await this.locator.screenshot({ path });
   }

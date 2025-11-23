@@ -1,53 +1,83 @@
-// components/bases/checkbox-base.ts
+// src/components/bases/checkbox-base.ts
 import { Page, Locator, expect } from "@playwright/test";
 
 /**
+ * CheckboxBase
+ * ------------
  * Chainable, type-safe base class for checkbox controls.
  *
  * Supports:
- * - <input type="checkbox">
- * - Elements with role="checkbox" (when used with proper locators)
+ *  - <input type="checkbox">
+ *  - Elements with role="checkbox" (when used with proper locators)
  *
- * Wraps Playwright locator actions, check/uncheck helpers, attributes, and assertions.
+ * This wraps a Playwright Locator and provides:
+ *  - Actions: check, uncheck, setChecked, click, focus/blur
+ *  - State queries: isChecked, isDisabled, isVisible, getValue, getName
+ *  - Assertions: shouldBeChecked, shouldBeUnchecked, shouldBePartiallyChecked,
+ *                shouldBeVisible, shouldBeDisabled, etc.
+ *  - Waiters: waitUntilReady, waitUntilChecked, waitUntilUnchecked
  *
- * All methods that talk to the page or use Playwright's async expect()
- * are async and return `this` for chaining, unless noted otherwise.
+ * Construction patterns:
+ *  - Selector-based (legacy / fallback):
+ *      const cb = new CheckboxBase(page, "#terms");
+ *  - Locator-based (preferred, used by ComponentFactory):
+ *      const cb = new CheckboxBase(page.getByLabel("I agree"));
  *
- * Construction:
- *  - new CheckboxBase(page, '#terms');
- *  - new CheckboxBase(page.getByLabel('I agree'));
+ * Example usage with your ComponentFactory:
  *
- * @example
- * const checkbox = new CheckboxBase(page, '#terms');
- * await checkbox.check();
- * await checkbox.shouldBeChecked();
- * await checkbox.uncheck();
- * await checkbox.shouldBeUnchecked();
+ *   const $ = new ComponentFactory(page);
+ *   const agreeCheckbox = $.checkboxByLabel("I agree");
+ *
+ *   await agreeCheckbox
+ *     .shouldBeVisible()
+ *     .shouldBeEnabled()
+ *     .check()
+ *     .shouldBeChecked();
  */
 export class CheckboxBase {
+  /** Underlying Playwright Locator for this checkbox. */
   readonly locator: Locator;
 
-  // === CONSTRUCTORS (overloads) ===
+  // ───────────────────────────────────────────────────────────────
+  // Constructors (overloads)
+  // ───────────────────────────────────────────────────────────────
 
   /**
    * Construct from a Page and a selector string (CSS/xpath/etc).
+   *
+   * @example
+   *   const cb = new CheckboxBase(page, "#terms");
    */
   constructor(page: Page, selector: string);
+
   /**
    * Construct directly from an existing Locator (e.g., page.getByLabel()).
+   *
+   * @example
+   *   const cb = new CheckboxBase(page.getByLabel("I agree"));
    */
   constructor(locator: Locator);
+
   constructor(pageOrLocator: Page | Locator, selector?: string) {
     if (selector !== undefined) {
-      // Usage: new CheckboxBase(page, '#terms')
+      // Usage: new CheckboxBase(page, "#terms")
       this.locator = (pageOrLocator as Page).locator(selector);
     } else {
-      // Usage: new CheckboxBase(page.getByLabel('I agree'))
+      // Usage: new CheckboxBase(page.getByLabel("I agree"))
       this.locator = pageOrLocator as Locator;
     }
   }
 
-  // === WAIT & STATE ===
+  /**
+   * Expose the underlying Locator for advanced operations.
+   */
+  asLocator(): Locator {
+    return this.locator;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Wait & state
+  // ───────────────────────────────────────────────────────────────
 
   /**
    * Wait for checkbox to be visible or attached.
@@ -83,7 +113,29 @@ export class CheckboxBase {
     return await this.locator.isChecked();
   }
 
-  // === ACTIONS (async) ===
+  /**
+   * Check if checkbox appears partially checked (indeterminate state).
+   *
+   * For native checkboxes, this uses the `indeterminate` property.
+   * For ARIA-only implementations, also see getAriaChecked().
+   */
+  async isPartiallyChecked(): Promise<boolean> {
+    const aria = await this.getAriaChecked();
+    if (aria === "mixed") return true;
+
+    return await this.locator.evaluate((el) => {
+      const input = el as HTMLInputElement;
+      return !!(
+        input &&
+        "indeterminate" in input &&
+        (input as any).indeterminate
+      );
+    });
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Actions (async)
+  // ───────────────────────────────────────────────────────────────
 
   /**
    * Click the checkbox (toggles state depending on implementation).
@@ -112,7 +164,7 @@ export class CheckboxBase {
   }
 
   /**
-   * Explicitly set checked state.
+   * Explicitly set checked state (true/false).
    */
   async setChecked(
     checked: boolean,
@@ -139,7 +191,7 @@ export class CheckboxBase {
   }
 
   /**
-   * Scroll checkbox into view.
+   * Scroll checkbox into view if needed.
    */
   async scrollIntoView(): Promise<this> {
     await this.locator.scrollIntoViewIfNeeded();
@@ -148,29 +200,49 @@ export class CheckboxBase {
 
   /**
    * Take a screenshot of just the checkbox.
+   *
+   * @param path Optional path; if provided, writes screenshot to disk.
+   * @returns The screenshot Buffer.
    */
   async screenshot(path?: string): Promise<Buffer> {
     return await this.locator.screenshot({ path });
   }
 
-  // === GETTERS (async) ===
+  // ───────────────────────────────────────────────────────────────
+  // Getters (async)
+  // ───────────────────────────────────────────────────────────────
 
   /** Get the checkbox value attribute (if present). */
   async getValue(): Promise<string | null> {
     return await this.locator.getAttribute("value");
   }
 
-  /** Get the checkbox name (if present). */
+  /** Get the checkbox name attribute (if present). */
   async getName(): Promise<string | null> {
     return await this.locator.getAttribute("name");
   }
 
-  /** Get the aria-checked attribute (useful for tri-state checkboxes). */
+  /**
+   * Get the aria-checked attribute (useful for ARIA-only or tri-state checkboxes).
+   *
+   * Possible values:
+   *  - "true"
+   *  - "false"
+   *  - "mixed"
+   *  - null (not set)
+   */
   async getAriaChecked(): Promise<string | null> {
     return await this.locator.getAttribute("aria-checked");
   }
 
-  // === ASSERTIONS (async – wrap Playwright's auto-retrying expect) ===
+  /** Get a specific attribute value. */
+  async getAttribute(name: string): Promise<string | null> {
+    return await this.locator.getAttribute(name);
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Assertions (async – wrap Playwright's auto-retrying expect)
+  // ───────────────────────────────────────────────────────────────
 
   /** Assert checkbox is checked. */
   async shouldBeChecked(): Promise<this> {
@@ -187,10 +259,11 @@ export class CheckboxBase {
   /**
    * Assert checkbox is partially checked (indeterminate state).
    *
-   * Uses the native `indeterminate` JS property on <input type="checkbox">.
-   * If your app uses ARIA (aria-checked="mixed"), you can swap this implementation.
+   * Uses the native `indeterminate` JS property on <input type="checkbox">
+   * plus can be extended with aria-checked="mixed".
    */
   async shouldBePartiallyChecked(): Promise<this> {
+    // Try native indeterminate
     await expect(this.locator).toHaveJSProperty("indeterminate", true);
     return this;
   }
@@ -203,6 +276,12 @@ export class CheckboxBase {
 
   /** Assert checkbox is hidden. */
   async shouldBeHidden(): Promise<this> {
+    await expect(this.locator).toBeHidden();
+    return this;
+  }
+
+  /** Assert checkbox is not visible (alias for hidden). */
+  async shouldNotBeVisible(): Promise<this> {
     await expect(this.locator).toBeHidden();
     return this;
   }
@@ -228,7 +307,7 @@ export class CheckboxBase {
   /**
    * Assert checkbox intersects the viewport.
    *
-   * @param options.ratio 0–1: how much of the element must be visible.
+   * @param options.ratio   0–1: how much of the element must be visible.
    * @param options.timeout Assertion timeout override (optional).
    */
   async shouldBeInViewport(options?: {
@@ -283,7 +362,24 @@ export class CheckboxBase {
     return this;
   }
 
-  // === WAITERS ===
+  /** Assert checkbox has a specific attribute and value. */
+  async shouldHaveAttribute(
+    name: string,
+    value: string | RegExp
+  ): Promise<this> {
+    await expect(this.locator).toHaveAttribute(name, value);
+    return this;
+  }
+
+  /** Assert checkbox does *not* have a given attribute. */
+  async shouldNotHaveAttribute(name: string): Promise<this> {
+    await expect(this.locator).not.toHaveAttribute(name, /.*/);
+    return this;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Waiters
+  // ───────────────────────────────────────────────────────────────
 
   /** Wait for checkbox to be visible and enabled. */
   async waitUntilReady(timeout = 10_000): Promise<this> {

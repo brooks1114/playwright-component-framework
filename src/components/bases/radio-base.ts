@@ -1,51 +1,85 @@
-// components/bases/radio-base.ts
+// src/components/bases/radio-base.ts
 import { Page, Locator, expect } from "@playwright/test";
 
 /**
+ * RadioBase
+ * ---------
  * Chainable, type-safe base class for radio controls.
  *
  * Supports:
- * - <input type="radio">
- * - Elements with role="radio" (when used with proper locators)
+ *  - <input type="radio">
+ *  - Elements with role="radio" (when used with proper locators)
  *
- * Wraps Playwright locator actions, check helpers, attributes, and assertions.
+ * This wraps a Playwright Locator and provides:
+ *  - Actions: click, check, setChecked, focus/blur
+ *  - State queries: isChecked, isDisabled, isVisible, getValue, getName
+ *  - Assertions: shouldBeChecked, shouldBeUnchecked, shouldBeVisible, etc.
+ *  - Waiters: waitUntilReady, waitUntilChecked, waitUntilUnchecked
  *
- * All methods that talk to the page or use Playwright's async expect()
- * are async and return `this` for chaining, unless noted otherwise.
+ * Construction patterns:
+ *  - Selector-based:
+ *      const adminRadio = new RadioBase(
+ *        page,
+ *        'input[name="role"][value="admin"]'
+ *      );
+ *  - Locator-based:
+ *      const adminRadio = new RadioBase(page.getByLabel("Admin"));
  *
- * Construction:
- *  - new RadioBase(page, 'input[name="role"][value="admin"]');
- *  - new RadioBase(page.getByLabel('Admin'));
+ * Example usage with your ComponentFactory:
  *
- * @example
- * const radio = new RadioBase(page, 'input[name="role"][value="admin"]');
- * await radio.check();
- * await radio.shouldBeChecked();
+ *   const $ = new ComponentFactory(page);
+ *   const adminRadio = $.radioByLabel("Admin");
+ *
+ *   await adminRadio
+ *     .shouldBeVisible()
+ *     .shouldBeEnabled()
+ *     .check()
+ *     .shouldBeChecked();
  */
 export class RadioBase {
+  /** Underlying Playwright Locator for this radio. */
   readonly locator: Locator;
 
-  // === CONSTRUCTORS (overloads) ===
+  // ───────────────────────────────────────────────────────────────
+  // Constructors (overloads)
+  // ───────────────────────────────────────────────────────────────
 
   /**
    * Construct from a Page and a selector string (CSS/xpath/etc).
+   *
+   * @example
+   *   const radio = new RadioBase(page, 'input[name="role"][value="admin"]');
    */
   constructor(page: Page, selector: string);
+
   /**
    * Construct directly from an existing Locator (e.g., page.getByLabel()).
+   *
+   * @example
+   *   const radio = new RadioBase(page.getByLabel("Admin"));
    */
   constructor(locator: Locator);
+
   constructor(pageOrLocator: Page | Locator, selector?: string) {
     if (selector !== undefined) {
       // Usage: new RadioBase(page, 'input[name="role"][value="admin"]')
       this.locator = (pageOrLocator as Page).locator(selector);
     } else {
-      // Usage: new RadioBase(page.getByLabel('Admin'))
+      // Usage: new RadioBase(page.getByLabel("Admin"))
       this.locator = pageOrLocator as Locator;
     }
   }
 
-  // === WAIT & STATE ===
+  /**
+   * Expose the underlying Locator for advanced operations.
+   */
+  asLocator(): Locator {
+    return this.locator;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Wait & state
+  // ───────────────────────────────────────────────────────────────
 
   /** Wait for radio to be visible or attached. */
   async waitFor(options?: {
@@ -79,7 +113,9 @@ export class RadioBase {
     return await this.locator.isChecked();
   }
 
-  // === ACTIONS (async) ===
+  // ───────────────────────────────────────────────────────────────
+  // Actions (async)
+  // ───────────────────────────────────────────────────────────────
 
   /**
    * Click the radio (typically selects it).
@@ -125,18 +161,25 @@ export class RadioBase {
     return this;
   }
 
-  /** Scroll radio into view. */
+  /** Scroll radio into view if needed. */
   async scrollIntoView(): Promise<this> {
     await this.locator.scrollIntoViewIfNeeded();
     return this;
   }
 
-  /** Take a screenshot of just the radio. */
+  /**
+   * Take a screenshot of just the radio.
+   *
+   * @param path Optional path; if provided, writes screenshot to disk.
+   * @returns The screenshot Buffer.
+   */
   async screenshot(path?: string): Promise<Buffer> {
     return await this.locator.screenshot({ path });
   }
 
-  // === GETTERS (async) ===
+  // ───────────────────────────────────────────────────────────────
+  // Getters (async)
+  // ───────────────────────────────────────────────────────────────
 
   /** Get the radio value attribute (if present). */
   async getValue(): Promise<string | null> {
@@ -153,7 +196,14 @@ export class RadioBase {
     return await this.locator.getAttribute("aria-checked");
   }
 
-  // === ASSERTIONS (async – wrap Playwright's auto-retrying expect) ===
+  /** Get a specific attribute value. */
+  async getAttribute(name: string): Promise<string | null> {
+    return await this.locator.getAttribute(name);
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Assertions (async – wrap Playwright's auto-retrying expect)
+  // ───────────────────────────────────────────────────────────────
 
   /** Assert radio is checked. */
   async shouldBeChecked(): Promise<this> {
@@ -179,6 +229,12 @@ export class RadioBase {
     return this;
   }
 
+  /** Assert radio is not visible (alias). */
+  async shouldNotBeVisible(): Promise<this> {
+    await expect(this.locator).toBeHidden();
+    return this;
+  }
+
   /** Assert radio is enabled. */
   async shouldBeEnabled(): Promise<this> {
     await expect(this.locator).toBeEnabled();
@@ -199,6 +255,9 @@ export class RadioBase {
 
   /**
    * Assert radio intersects the viewport.
+   *
+   * @param options.ratio   0–1: how much of the element must be visible.
+   * @param options.timeout Assertion timeout override (optional).
    */
   async shouldBeInViewport(options?: {
     ratio?: number;
@@ -252,7 +311,24 @@ export class RadioBase {
     return this;
   }
 
-  // === WAITERS ===
+  /** Assert radio has a specific attribute and value. */
+  async shouldHaveAttribute(
+    name: string,
+    value: string | RegExp
+  ): Promise<this> {
+    await expect(this.locator).toHaveAttribute(name, value);
+    return this;
+  }
+
+  /** Assert radio does *not* have a given attribute. */
+  async shouldNotHaveAttribute(name: string): Promise<this> {
+    await expect(this.locator).not.toHaveAttribute(name, /.*/);
+    return this;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Waiters
+  // ───────────────────────────────────────────────────────────────
 
   /** Wait for radio to be visible and enabled. */
   async waitUntilReady(timeout = 10_000): Promise<this> {

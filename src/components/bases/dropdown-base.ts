@@ -1,37 +1,62 @@
+// src/components/bases/dropdown-base.ts
 import { Page, Locator, expect } from "@playwright/test";
 
 /**
- * Chainable, type-safe base class for <select> dropdowns (single and multi-select).
- * Wraps Playwright locator actions, selection, attributes, and assertions.
+ * DropdownBase
+ * ------------
+ * Chainable, type-safe base class for <select> dropdowns
+ * (single- and multi-select).
  *
- * All methods that talk to the page or use Playwright's async expect()
- * are async and return `this` for chaining, unless noted otherwise.
+ * This wraps a Playwright Locator and provides:
+ *  - Selection helpers (by label/text, by value, by index, multi-select)
+ *  - State queries (isVisible, isEnabled, isMultiple, getSelected* helpers)
+ *  - Assertion helpers (shouldHaveValue, shouldContainOption, etc.)
+ *  - Waiters (waitUntilReady, waitForValue, waitForOption, etc.)
  *
- * Construction:
- *  - new DropdownBase(page, "#role");
- *  - new DropdownBase(page.getByLabel("Role"));
+ * Construction patterns (all supported):
+ *  - Selector-based (legacy / fallback):
+ *      const dd = new DropdownBase(page, "#role");
+ *  - Locator-based (preferred, used by ComponentFactory):
+ *      const dd = new DropdownBase(page.getByLabel("Role"));
  *
- * @example
- * const dropdown = new DropdownBase(page, "#role");
- * await dropdown.selectByText("Admin");
- * await dropdown.shouldHaveValue("admin");
- * await dropdown.shouldContainOption("Guest");
+ * Example usage in a test with your ComponentFactory:
+ *
+ *   const $ = new ComponentFactory(page);
+ *   const matterTypeDropdown = $.dropdownByLabel("Matter type");
+ *
+ *   await matterTypeDropdown
+ *     .shouldBeVisible()
+ *     .shouldBeEnabled()
+ *     .selectByText("Suits");
  */
 export class DropdownBase {
+  /** Underlying <select> locator (or equivalent custom dropdown root). */
   readonly locator: Locator;
+
+  /** Locator for <option> elements inside the dropdown (native <select>). */
   private readonly optionsLocator: Locator;
 
-  // === CONSTRUCTORS (overloads) ===
+  // ───────────────────────────────────────────────────────────────
+  // Constructors (overloads)
+  // ───────────────────────────────────────────────────────────────
 
   /**
    * Construct from a Page and a selector string (CSS/xpath/etc).
+   *
+   * @example
+   *   const dd = new DropdownBase(page, "#role");
    */
   constructor(page: Page, selector: string);
+
   /**
    * Construct directly from an existing Locator (e.g., page.getByLabel()).
    * The locator should point to the <select> element (or equivalent).
+   *
+   * @example
+   *   const dd = new DropdownBase(page.getByLabel("Role"));
    */
   constructor(locator: Locator);
+
   constructor(pageOrLocator: Page | Locator, selector?: string) {
     if (selector !== undefined) {
       // Usage: new DropdownBase(page, "#role")
@@ -41,10 +66,21 @@ export class DropdownBase {
       this.locator = pageOrLocator as Locator;
     }
 
+    // For native <select> elements this will target <option> children.
+    // For custom dropdowns, override usage or extend this class.
     this.optionsLocator = this.locator.locator("option");
   }
 
-  // === WAIT & STATE ===
+  /**
+   * Expose the underlying Locator for advanced operations.
+   */
+  asLocator(): Locator {
+    return this.locator;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Wait & state
+  // ───────────────────────────────────────────────────────────────
 
   /**
    * Wait for dropdown to be visible or attached.
@@ -82,16 +118,21 @@ export class DropdownBase {
   }
 
   /**
-   * Check if dropdown allows multiple selections.
+   * Check if dropdown allows multiple selections (has `multiple` attribute).
    */
   async isMultiple(): Promise<boolean> {
     const multiple = await this.locator.getAttribute("multiple");
     return multiple !== null;
   }
 
-  // === SELECTION (async) ===
+  // ───────────────────────────────────────────────────────────────
+  // Selection (async)
+  //  - Uses Playwright's selectOption under the hood.
+  // ───────────────────────────────────────────────────────────────
 
   /**
+   * Low-level selection helper.
+   *
    * Select option(s) by value, label, index, or array of those.
    * Accepts string, object, or readonly array.
    */
@@ -113,20 +154,29 @@ export class DropdownBase {
 
   /**
    * Select by visible text (label).
+   *
+   * This is the method you should use with your MATTER_SUBTYPE label
+   * constants, e.g.:
+   *
+   *   await subtypeDropdown.selectByText(
+   *     MATTER_SUBTYPE_OPTIONS.SUITS.CLASS_ACTION.label
+   *   );
    */
   async selectByText(text: string): Promise<this> {
     return this.selectOption({ label: text });
   }
 
   /**
-   * Select by option value.
+   * Select by option value (the underlying `value` attribute).
+   *
+   * Use this if your framework works in terms of codes like "suit_06".
    */
   async selectByValue(value: string): Promise<this> {
     return this.selectOption({ value });
   }
 
   /**
-   * Select by index.
+   * Select by option index (0-based index into <option> list).
    */
   async selectByIndex(index: number): Promise<this> {
     return this.selectOption({ index });
@@ -142,17 +192,30 @@ export class DropdownBase {
   /**
    * Select multiple option values (for multi-selects).
    *
-   * NOTE: These are option *values* (not labels). For label-based selection,
-   * you would need a separate helper similar to selectByText().
+   * NOTE: These are option *values* (not labels).
    */
   async selectMultiple(values: readonly string[]): Promise<this> {
     return this.selectOption(values);
   }
 
-  // === GETTERS (async) ===
+  /**
+   * Wait until dropdown is visible & enabled, then select by text.
+   */
+  async waitUntilEnabledAndSelectByText(
+    text: string,
+    timeout = 10_000
+  ): Promise<this> {
+    await this.waitUntilReady(timeout);
+    await this.selectByText(text);
+    return this;
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Getters (async)
+  // ───────────────────────────────────────────────────────────────
 
   /**
-   * Get currently selected value(s).
+   * Get selected value(s).
    *
    * For single-select: returns a string value.
    * For multi-select: returns an array of selected values.
@@ -171,6 +234,36 @@ export class DropdownBase {
     return await this.locator.inputValue();
   }
 
+  /**
+   * Get selected value(s) as an array, regardless of single-/multi-select.
+   */
+  async getSelectedValuesArray(): Promise<string[]> {
+    const selected = await this.getSelectedValue();
+    return Array.isArray(selected) ? selected : [selected];
+  }
+
+  /**
+   * Get selected option text(s).
+   *  - Single-select: string
+   *  - Multi-select: string[]
+   */
+  async getSelectedText(): Promise<string | string[]> {
+    const texts = await this.optionsLocator.evaluateAll((els) =>
+      (els as HTMLOptionElement[])
+        .filter((el) => el.selected)
+        .map((el) => el.textContent?.trim() ?? "")
+    );
+    return texts.length === 1 ? texts[0] : texts;
+  }
+
+  /**
+   * Get selected option text(s) as an array.
+   */
+  async getSelectedTextsArray(): Promise<string[]> {
+    const selected = await this.getSelectedText();
+    return Array.isArray(selected) ? selected : [selected];
+  }
+
   /** Get all option texts. */
   async getAllOptionTexts(): Promise<string[]> {
     return (await this.optionsLocator.allTextContents()).map((t) => t.trim());
@@ -183,54 +276,34 @@ export class DropdownBase {
     );
   }
 
-  /**
-   * Get selected option text(s).
-   * Single-select: string
-   * Multi-select: string[]
-   */
-  async getSelectedText(): Promise<string | string[]> {
-    const texts = await this.optionsLocator.evaluateAll((els) =>
-      (els as HTMLOptionElement[])
-        .filter((el) => el.selected)
-        .map((el) => el.textContent?.trim() ?? "")
-    );
-    return texts.length === 1 ? texts[0] : texts;
-  }
-
   /** Get the <select> name attribute. */
   async getName(): Promise<string | null> {
     return await this.locator.getAttribute("name");
   }
 
-  // === ACTIONS (advanced) ===
+  // ───────────────────────────────────────────────────────────────
+  // Actions (advanced)
+  // ───────────────────────────────────────────────────────────────
 
-  /**
-   * Focus the dropdown.
-   */
+  /** Focus the dropdown. */
   async focus(): Promise<this> {
     await this.locator.focus();
     return this;
   }
 
-  /**
-   * Remove focus from the dropdown.
-   */
+  /** Remove focus from the dropdown. */
   async blur(): Promise<this> {
     await this.locator.blur();
     return this;
   }
 
-  /**
-   * Press a key (e.g., 'ArrowDown', 'Enter').
-   */
+  /** Press a key (e.g., 'ArrowDown', 'Enter'). */
   async press(key: string): Promise<this> {
     await this.locator.press(key);
     return this;
   }
 
-  /**
-   * Scroll dropdown into view.
-   */
+  /** Scroll dropdown into view if needed. */
   async scrollIntoView(): Promise<this> {
     await this.locator.scrollIntoViewIfNeeded();
     return this;
@@ -238,12 +311,17 @@ export class DropdownBase {
 
   /**
    * Take a screenshot of just the dropdown.
+   *
+   * @param path Optional path; if provided, writes screenshot to disk.
+   * @returns The screenshot Buffer.
    */
   async screenshot(path?: string): Promise<Buffer> {
     return await this.locator.screenshot({ path });
   }
 
-  // === ASSERTIONS (async – wrap Playwright's auto-retrying expect) ===
+  // ───────────────────────────────────────────────────────────────
+  // Assertions (async – wrap Playwright's auto-retrying expect)
+  // ───────────────────────────────────────────────────────────────
 
   /** Assert single selected value (for single-select dropdowns). */
   async shouldHaveValue(expected: string): Promise<this> {
@@ -254,6 +332,24 @@ export class DropdownBase {
   /** Assert multiple selected values (for multi-select dropdowns). */
   async shouldHaveValues(expected: readonly string[]): Promise<this> {
     await expect(this.locator).toHaveValues(expected as string[]);
+    return this;
+  }
+
+  /** Assert the selected text (label) for single-select dropdowns. */
+  async shouldHaveSelectedText(expected: string | RegExp): Promise<this> {
+    const selectedText = await this.getSelectedText();
+    await expect
+      .soft(selectedText)
+      .toMatch(
+        expected instanceof RegExp ? expected : new RegExp(`^${expected}$`)
+      );
+    return this;
+  }
+
+  /** Assert the selected texts (labels) for multi-select dropdowns. */
+  async shouldHaveSelectedTexts(expected: readonly string[]): Promise<this> {
+    const texts = await this.getSelectedTextsArray();
+    await expect.soft(texts).toEqual(expected as string[]);
     return this;
   }
 
@@ -290,7 +386,7 @@ export class DropdownBase {
   /**
    * Assert dropdown intersects the viewport.
    *
-   * @param options.ratio 0–1: how much of the element must be visible.
+   * @param options.ratio   0–1: how much of the element must be visible.
    * @param options.timeout Assertion timeout override (optional).
    */
   async shouldBeInViewport(options?: {
@@ -302,9 +398,12 @@ export class DropdownBase {
   }
 
   /**
-   * Assert dropdown contains an option with the given text.
+   * Assert dropdown contains an option with the given text (label).
    *
-   * Checks that at least one <option> contains the given text.
+   * This is what you want for:
+   *   await subtypeDropdown.shouldContainOption(
+   *     MATTER_SUBTYPE_OPTIONS.SUITS.CLASS_ACTION.label
+   *   );
    */
   async shouldContainOption(text: string): Promise<this> {
     await expect(this.optionsLocator).toContainText(text);
@@ -325,7 +424,7 @@ export class DropdownBase {
     return this;
   }
 
-  /** Assert dropdown has specific name. */
+  /** Assert dropdown has specific name attribute. */
   async shouldHaveName(expected: string): Promise<this> {
     await expect(this.locator).toHaveAttribute("name", expected);
     return this;
@@ -351,7 +450,9 @@ export class DropdownBase {
     return this;
   }
 
-  // === WAITERS ===
+  // ───────────────────────────────────────────────────────────────
+  // Waiters
+  // ───────────────────────────────────────────────────────────────
 
   /** Wait for dropdown to be visible and enabled. */
   async waitUntilReady(timeout = 10_000): Promise<this> {
@@ -381,14 +482,33 @@ export class DropdownBase {
     return this;
   }
 
-  // === COMPOUND ACTIONS ===
+  // ───────────────────────────────────────────────────────────────
+  // Compound actions
+  // ───────────────────────────────────────────────────────────────
 
   /**
    * Select by text (label) and verify resulting value.
+   *
+   * Useful when your test data includes both the label and the expected code.
    */
   async selectAndVerify(text: string, value: string): Promise<this> {
     await this.selectByText(text);
     await this.shouldHaveValue(value);
+    return this;
+  }
+
+  /**
+   * Select by text (label) and verify the selected text.
+   *
+   * This is often what you want when using label-driven test data:
+   *
+   *   await matterTypeDropdown
+   *     .selectByText(MATTER_TYPE_OPTIONS.SUITS)
+   *     .selectByTextAndVerifySelectedText(MATTER_TYPE_OPTIONS.SUITS);
+   */
+  async selectByTextAndVerifySelectedText(text: string): Promise<this> {
+    await this.selectByText(text);
+    await this.shouldHaveSelectedText(text);
     return this;
   }
 

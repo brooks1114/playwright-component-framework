@@ -1,19 +1,22 @@
 [
   {
+    "id": 1,
     "caseName": "Matter 0001",
-    "docketNumber": "",
+    "docketNumber": "RNG15",
     "matterType": "Suits",
     "matterSubtype": "Class Action"
   },
   {
+    "id": 2,
     "caseName": "Matter 0002",
-    "docketNumber": "",
+    "docketNumber": "RNG15",
     "matterType": "Non-Docket Legal Actions",
     "matterSubtype": "Appeal"
   },
   {
+    "id": 3,
     "caseName": "Matter 0003",
-    "docketNumber": "",
+    "docketNumber": "RNG15",
     "matterType": "Non-Litigated Matter",
     "matterSubtype": "Bad Faith"
   }
