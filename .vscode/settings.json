@@ -19,5 +19,6 @@
   },
 
   "playwright.reuseBrowser": false,
-  "playwright.showTrace": false
+  "playwright.showTrace": false,
+  "cSpell.words": ["contenteditable"]
 }
