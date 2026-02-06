@@ -4,82 +4,109 @@ import { Page, Locator, expect } from "@playwright/test";
 /**
  * ButtonBase
  * ----------
- * Chainable, type-safe base class for <button>, input[type="submit"],
- * and role="button" elements.
+ * Chainable, type-safe base class for interactive button elements, including:
+ *  - <button> elements
+ *  - <input type="submit">, <input type="button">, <input type="reset">
+ *  - Any element with role="button" (ARIA-compliant buttons)
  *
- * This wraps a Playwright Locator and provides:
- *  - Click helpers (click, double-click, right-click, navigate helpers)
- *  - Interaction helpers (hover, focus, press)
- *  - State queries (isVisible, isDisabled, getText, getAttribute, etc.)
- *  - Assertion helpers (shouldBeVisible, shouldHaveText, etc.)
- *  - Waiters (waitUntilEnabled, waitUntilDisabled, waitForText)
+ * This class wraps a Playwright Locator to provide:
+ *  - Click variations (single, double, right-click, with navigation or new page)
+ *  - Hover, focus, blur, keyboard press
+ *  - State checks (visible, enabled, disabled, loading, text)
+ *  - Rich assertions (text, accessibility, attributes, viewport)
+ *  - Wait helpers for common button states
  *
- * Construction patterns (all supported):
- *  - Selector-based (legacy / fallback):
- *      const btn = new ButtonBase(page, 'button[type="submit"]');
- *  - Locator-based (preferred, used by ComponentFactory):
- *      const btn = new ButtonBase(page.getByRole('button', { name: 'Save' }));
+ * Preferred construction via ComponentFactory (accessibility-first):
+ *   ui.buttonByRoleName("Save")
+ *   ui.buttonByTestId("submit-form")
  *
- * Example usage in a test with your ComponentFactory:
+ * Fallback: direct selector construction when needed.
  *
- *   const $ = new ComponentFactory(page);
- *   const searchButton = $.buttonByTestId("navbar-search-button");
+ * @example Basic usage in a test
+ *   const ui = new ComponentFactory(page);
+ *   const saveButton = ui.buttonByRoleName("Save");
  *
- *   await searchButton
+ *   await saveButton
  *     .shouldBeVisible()
  *     .shouldBeEnabled()
- *     .click();
+ *     .shouldHaveText("Save")
+ *     .click()
+ *     .waitUntilDisabled();  // common after form submission
+ *
+ * @example Navigation / form submit
+ *   await ui.buttonByRoleName("Next")
+ *     .shouldBeEnabled()
+ *     .clickAndNavigate();
+ *
+ * @example Opening a new tab
+ *   const reportPage = await ui.buttonByRoleName("View Full Report")
+ *     .clickAndWaitForNewPage();
+ *   await reportPage.waitForURL(/report/);
  */
 export class ButtonBase {
-  /** Underlying Playwright Locator for this button. */
+  /** Underlying Playwright Locator pointing to the button element. */
   readonly locator: Locator;
 
   // ───────────────────────────────────────────────────────────────
-  // Constructors (overloads)
+  // Constructors
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and a selector string (CSS/xpath/etc).
+   * Construct from a Page and a CSS/XPath selector string (fallback pattern).
+   *
+   * @param page - The Playwright Page instance
+   * @param selector - CSS or XPath selector for the button
    *
    * @example
-   *   const button = new ButtonBase(page, 'button[type="submit"]');
+   *   const btn = new ButtonBase(page, 'button[type="submit"]');
+   *   const btn = new ButtonBase(page, '[data-testid="login-btn"]');
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator (e.g., page.getByRole()).
+   * Construct directly from an existing Locator (preferred – accessibility-first).
+   *
+   * @param locator - Playwright Locator pointing to the button
    *
    * @example
-   *   const button = new ButtonBase(page.getByRole('button', { name: 'Save' }));
+   *   const btn = new ButtonBase(page.getByRole("button", { name: "Save" }));
+   *   const btn = new ButtonBase(page.getByTestId("submit-form"));
    */
   constructor(locator: Locator);
 
   constructor(pageOrLocator: Page | Locator, selector?: string) {
-    if (selector !== undefined) {
-      // Usage: new ButtonBase(page, 'button[type="submit"]')
-      this.locator = (pageOrLocator as Page).locator(selector);
-    } else {
-      // Usage: new ButtonBase(page.getByRole('button', { name: 'Save' }))
-      this.locator = pageOrLocator as Locator;
-    }
+    this.locator =
+      selector !== undefined
+        ? (pageOrLocator as Page).locator(selector)
+        : (pageOrLocator as Locator);
   }
 
-  // Small helper in case advanced users want direct access in a “named” way.
+  /**
+   * Returns the underlying Playwright Locator for advanced or custom operations.
+   *
+   * @returns The raw Locator
+   *
+   * @example
+   *   await button.asLocator().dispatchEvent("customEvent");
+   */
   asLocator(): Locator {
     return this.locator;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Click + interaction actions (async, chainable)
+  // Click & Interaction Actions – chainable
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Click the button.
+   * Perform a standard left-click on the button.
+   * Playwright automatically waits for visibility and actionability.
    *
-   * @param options  Standard Playwright locator.click() options.
+   * @param options - Playwright click options (force, timeout, position, etc.)
+   * @returns this (for chaining)
    *
    * @example
-   *   await $.buttonByTestId("navbar-search-button").click();
+   *   await button.click();
+   *   await button.click({ force: true }); // bypass actionability checks if needed
    */
   async click(options?: Parameters<Locator["click"]>[0]): Promise<this> {
     await this.locator.click(options);
@@ -87,48 +114,64 @@ export class ButtonBase {
   }
 
   /**
-   * Wait until the button is visible & enabled, then click.
+   * Wait until the button is visible and enabled, then perform a click.
+   * Very useful for buttons that are temporarily disabled during loading/validation.
    *
-   * This is safer for dynamic UIs that enable buttons after async work.
+   * @param timeout - Maximum wait time in milliseconds (default: 10 seconds)
+   * @returns this (for chaining)
+   *
+   * @example
+   *   await submitButton.waitUntilEnabledAndClick(15000);
    */
   async waitUntilEnabledAndClick(timeout = 10_000): Promise<this> {
     await this.waitUntilEnabled(timeout);
-    await this.locator.click();
+    await this.click();
     return this;
   }
 
   /**
-   * Click and wait for the next network response.
+   * Click the button and wait for a network response (e.g. form submission, page navigation).
    *
-   * Generic helper for flows where this button triggers a key network call.
+   * @param options.timeout - Timeout for waiting on the response (default: 30 seconds)
+   * @returns this (for chaining)
+   *
+   * @example
+   *   await loginButton.clickAndNavigate();
    */
   async clickAndNavigate(options?: { timeout?: number }): Promise<this> {
     const [response] = await Promise.all([
       this.locator
         .page()
         .waitForEvent("response", { timeout: options?.timeout ?? 30_000 }),
-      this.locator.click(),
+      this.click(),
     ]);
     await response?.finished();
     return this;
   }
 
   /**
-   * Click and wait for a new Page (e.g., target="_blank").
+   * Click the button and wait for a new browser page/tab to open (e.g. target="_blank").
    *
-   * @returns The new Page object.
+   * @returns The newly opened Page
+   *
+   * @example
+   *   const reportPage = await ui.buttonByRoleName("View Full Report")
+   *     .clickAndWaitForNewPage();
    */
   async clickAndWaitForNewPage(): Promise<Page> {
     const [newPage] = await Promise.all([
       this.locator.page().context().waitForEvent("page"),
-      this.locator.click(),
+      this.click(),
     ]);
     await newPage.waitForLoadState("domcontentloaded");
     return newPage;
   }
 
   /**
-   * Double-click the button.
+   * Perform a double-click on the button.
+   *
+   * @param options - Playwright dblclick options
+   * @returns this (for chaining)
    */
   async dblclick(options?: Parameters<Locator["dblclick"]>[0]): Promise<this> {
     await this.locator.dblclick(options);
@@ -136,7 +179,10 @@ export class ButtonBase {
   }
 
   /**
-   * Right-click the button.
+   * Perform a right-click on the button.
+   *
+   * @param options - Playwright click options (applied with button: "right")
+   * @returns this (for chaining)
    */
   async rightClick(options?: Parameters<Locator["click"]>[0]): Promise<this> {
     await this.locator.click({ ...options, button: "right" });
@@ -144,7 +190,10 @@ export class ButtonBase {
   }
 
   /**
-   * Hover over the button.
+   * Hover over the button (triggers mouseenter, tooltips, hover styles).
+   *
+   * @param options - Playwright hover options
+   * @returns this (for chaining)
    */
   async hover(options?: Parameters<Locator["hover"]>[0]): Promise<this> {
     await this.locator.hover(options);
@@ -152,7 +201,9 @@ export class ButtonBase {
   }
 
   /**
-   * Focus the button.
+   * Focus the button (useful for keyboard navigation testing).
+   *
+   * @returns this (for chaining)
    */
   async focus(): Promise<this> {
     await this.locator.focus();
@@ -161,6 +212,8 @@ export class ButtonBase {
 
   /**
    * Remove focus from the button.
+   *
+   * @returns this (for chaining)
    */
   async blur(): Promise<this> {
     await this.locator.blur();
@@ -168,75 +221,117 @@ export class ButtonBase {
   }
 
   /**
-   * Press a key while the button is focused (e.g., 'Enter', 'Space').
+   * Press a keyboard key while the button is focused (e.g. "Enter" to activate).
+   *
+   * @param key - Key name (e.g. "Enter", "Space", "ArrowDown")
+   * @param options - Press options (delay, timeout, etc.)
+   * @returns this (for chaining)
    */
   async press(
     key: string,
-    options?: Parameters<Locator["press"]>[1]
+    options?: Parameters<Locator["press"]>[1],
   ): Promise<this> {
     await this.locator.press(key, options);
     return this;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Getters / state queries (async)
+  // Getters & State Queries
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Get the visible text of the button, trimmed.
+   * Get the visible text content of the button, trimmed.
+   *
+   * @returns The button's text (empty string if none)
+   *
+   * @example
+   *   const label = await button.getText(); // "Save Changes"
    */
   async getText(): Promise<string> {
-    return (await this.locator.textContent({ timeout: 5_000 }))?.trim() ?? "";
+    return (await this.locator.textContent())?.trim() ?? "";
   }
 
   /**
-   * Get the `type` attribute (e.g., 'submit', 'button'), if present.
+   * Get the type attribute (e.g. "submit", "button", "reset").
+   *
+   * @returns The type value or null if not present
    */
   async getType(): Promise<string | null> {
     return await this.locator.getAttribute("type");
   }
 
   /**
-   * Get the `value` attribute, if present.
+   * Get the value attribute (common on <input type="submit">).
+   *
+   * @returns The value or null if not present
    */
   async getValue(): Promise<string | null> {
     return await this.locator.getAttribute("value");
   }
 
   /**
-   * Get a specific attribute value.
+   * Get any attribute value by name.
+   *
+   * @param name - Attribute name (e.g. "data-testid", "aria-label")
+   * @returns Attribute value or null
    */
   async getAttribute(name: string): Promise<string | null> {
     return await this.locator.getAttribute(name);
   }
 
   /**
-   * Check if the button is disabled.
-   */
-  async isDisabled(): Promise<boolean> {
-    return await this.locator.isDisabled();
-  }
-
-  /**
    * Check if the button is visible.
+   *
+   * @returns true if visible, false otherwise
    */
   async isVisible(): Promise<boolean> {
     return await this.locator.isVisible();
   }
 
   /**
-   * Check if the button intersects the viewport.
+   * Check if the button is disabled.
+   *
+   * @returns true if disabled, false otherwise
+   */
+  async isDisabled(): Promise<boolean> {
+    return await this.locator.isDisabled();
+  }
+
+  /**
+   * Check if the button appears in the viewport (basic proxy).
+   * For precise assertion use shouldBeInViewport().
+   *
+   * @returns true if visible (proxy check)
    */
   async isInViewport(): Promise<boolean> {
-    return await this.locator.isVisible(); // proxy; toBeInViewport is assertion, not predicate
+    return await this.locator.isVisible(); // proxy; use shouldBeInViewport() for exact
+  }
+
+  /**
+   * Check if the button is in a loading/busy state.
+   * Looks for common loading indicators inside the button.
+   *
+   * @param spinnerSelector - Optional custom selector for spinner/busy indicator
+   * @returns true if loading indicator is visible
+   *
+   * @example
+   *   await submitButton.isLoading(); // true if .spinner is visible inside
+   */
+  async isLoading(
+    spinnerSelector = '.spinner, [aria-busy="true"], .loading, [role="progressbar"]',
+  ): Promise<boolean> {
+    const indicator = this.locator.locator(spinnerSelector);
+    return await indicator.isVisible();
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Utilities (scroll, screenshot, loading state)
+  // Utilities
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Scroll button into view if needed.
+   * Scroll the button into view if it is not currently visible.
+   *
+   * @returns this (for chaining)
    */
   async scrollIntoView(): Promise<this> {
     await this.locator.scrollIntoViewIfNeeded();
@@ -244,76 +339,78 @@ export class ButtonBase {
   }
 
   /**
-   * Take a screenshot of just this button.
+   * Take a screenshot of just the button element.
    *
-   * @param path Optional path; if provided, writes screenshot to disk.
-   * @returns The screenshot Buffer.
+   * @param path - Optional file path to save the screenshot
+   * @returns Buffer containing the screenshot image
    */
   async screenshot(path?: string): Promise<Buffer> {
     return await this.locator.screenshot({ path });
   }
 
+  // ───────────────────────────────────────────────────────────────
+  // Assertions – chainable, auto-retrying via expect
+  // ───────────────────────────────────────────────────────────────
+
   /**
-   * Check if the button appears to be in a "loading" state,
-   * typically via a spinner or busy indicator inside it.
+   * Assert the button has the exact expected text.
    *
-   * @param spinnerSelector CSS selector to locate the spinner within the button.
+   * @param expected - Exact string or RegExp to match against textContent
+   * @returns this (for chaining)
+   *
+   * @example
+   *   await button.shouldHaveText("Save");
    */
-  async isLoading(
-    spinnerSelector = '.spinner, [aria-busy="true"]'
-  ): Promise<boolean> {
-    const spinner = this.locator.locator(spinnerSelector);
-    return await spinner.isVisible();
-  }
-
-  // ───────────────────────────────────────────────────────────────
-  // Assertions (async, chainable)
-  //  - These wrap Playwright's auto-retrying expect()
-  // ───────────────────────────────────────────────────────────────
-
-  /** Assert the button has exact text (or matches RegExp). */
   async shouldHaveText(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveText(expected);
     return this;
   }
 
-  /** Assert the button contains text (substring/RegExp). */
+  /**
+   * Assert the button contains the given text (substring or pattern).
+   *
+   * @param expected - String or RegExp to find within textContent
+   */
   async shouldContainText(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toContainText(expected);
     return this;
   }
 
-  /** Assert the button is visible. */
+  /**
+   * Assert the button is visible.
+   */
   async shouldBeVisible(): Promise<this> {
     await expect(this.locator).toBeVisible();
     return this;
   }
 
-  /** Assert the button is hidden. */
+  /**
+   * Assert the button is hidden.
+   */
   async shouldBeHidden(): Promise<this> {
     await expect(this.locator).toBeHidden();
     return this;
   }
 
-  /** Assert the button is not visible (alias for hidden). */
-  async shouldNotBeVisible(): Promise<this> {
-    await expect(this.locator).toBeHidden();
-    return this;
-  }
-
-  /** Assert the button is enabled. */
+  /**
+   * Assert the button is enabled.
+   */
   async shouldBeEnabled(): Promise<this> {
     await expect(this.locator).toBeEnabled();
     return this;
   }
 
-  /** Assert the button is disabled. */
+  /**
+   * Assert the button is disabled.
+   */
   async shouldBeDisabled(): Promise<this> {
     await expect(this.locator).toBeDisabled();
     return this;
   }
 
-  /** Assert the button is focused. */
+  /**
+   * Assert the button is focused.
+   */
   async shouldBeFocused(): Promise<this> {
     await expect(this.locator).toBeFocused();
     return this;
@@ -322,8 +419,7 @@ export class ButtonBase {
   /**
    * Assert the button intersects the viewport.
    *
-   * @param options.ratio   0–1: how much of the element must be visible.
-   * @param options.timeout Assertion timeout override.
+   * @param options - { ratio?: number (0-1), timeout?: number }
    */
   async shouldBeInViewport(options?: {
     ratio?: number;
@@ -333,113 +429,136 @@ export class ButtonBase {
     return this;
   }
 
-  /** Assert the button has a specific type attribute. */
+  /**
+   * Assert the button has a specific type attribute.
+   *
+   * @param expected - e.g. "submit", "button"
+   */
   async shouldHaveType(expected: string): Promise<this> {
     await expect(this.locator).toHaveAttribute("type", expected);
     return this;
   }
 
-  /** Assert the button has a specific value attribute. */
+  /**
+   * Assert the button has a specific value attribute.
+   */
   async shouldHaveValue(expected: string): Promise<this> {
     await expect(this.locator).toHaveAttribute("value", expected);
     return this;
   }
 
-  /** Assert the button's class attribute matches exactly or matches a pattern. */
+  /**
+   * Assert the button's class attribute matches exactly or a pattern.
+   */
   async shouldHaveClass(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveClass(expected);
     return this;
   }
 
-  /** Assert the button's class list contains a specific substring or pattern. */
-  async shouldHaveClassContaining(expected: string | RegExp): Promise<this> {
-    await expect(this.locator).toHaveClass(
-      expected instanceof RegExp ? expected : new RegExp(expected)
-    );
-    return this;
-  }
-
-  /** Assert the button has aria-label with the given value or pattern. */
+  /**
+   * Assert the button has aria-label with the given value or pattern.
+   */
   async shouldHaveAriaLabel(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveAttribute("aria-label", expected);
     return this;
   }
 
-  /** Assert aria-disabled="true" on the button. */
-  async shouldBeAriaDisabled(): Promise<this> {
-    await expect(this.locator).toHaveAttribute("aria-disabled", "true");
-    return this;
-  }
-
   /**
-   * Assert the button has a specific ARIA role.
-   *
-   * Note: Playwright does not have a toHaveRole matcher;
-   * we assert via the "role" attribute instead.
+   * Assert the button has a specific accessible name.
    */
-  async shouldHaveRole(expected: string): Promise<this> {
-    await expect(this.locator).toHaveAttribute("role", expected);
-    return this;
-  }
-
-  /** Assert the button has a specific accessible name. */
   async shouldHaveAccessibleName(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveAccessibleName(expected);
     return this;
   }
 
-  /** Assert the button has a specific accessible description. */
+  /**
+   * Assert the button has a specific accessible description.
+   */
   async shouldHaveAccessibleDescription(
-    expected: string | RegExp
+    expected: string | RegExp,
   ): Promise<this> {
     await expect(this.locator).toHaveAccessibleDescription(expected);
     return this;
   }
 
-  /** Assert the button has a specific attribute and value. */
+  /**
+   * Assert the button has a specific attribute and value.
+   *
+   * @param name - Attribute name
+   * @param value - Expected value or RegExp
+   */
   async shouldHaveAttribute(
     name: string,
-    value: string | RegExp
+    value: string | RegExp,
   ): Promise<this> {
     await expect(this.locator).toHaveAttribute(name, value);
     return this;
   }
 
-  /** Assert the button does *not* have a given attribute. */
+  /**
+   * Assert the button does NOT have a given attribute.
+   *
+   * @param name - Attribute name that should be absent
+   */
   async shouldNotHaveAttribute(name: string): Promise<this> {
     await expect(this.locator).not.toHaveAttribute(name, /.*/);
     return this;
   }
 
+  /**
+   * Assert the button shows a loading indicator.
+   *
+   * @param spinnerSelector - Optional custom selector for loading indicator
+   */
+  async shouldHaveLoadingState(
+    spinnerSelector = '.spinner, [aria-busy="true"], .loading',
+  ): Promise<this> {
+    await expect(this.locator.locator(spinnerSelector)).toBeVisible();
+    return this;
+  }
+
   // ───────────────────────────────────────────────────────────────
-  // Waiters (async, chainable)
+  // Wait Helpers
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Wait for button to be visible and enabled.
+   * Wait until the button is visible and enabled.
+   * Most common readiness check before interacting with buttons.
+   *
+   * @param timeout - Maximum wait time in milliseconds
+   * @returns this (for chaining)
    */
   async waitUntilEnabled(timeout = 10_000): Promise<this> {
-    await this.locator.waitFor({ state: "visible", timeout });
-    await expect(this.locator).toBeEnabled({ timeout });
+    await Promise.all([
+      this.locator.waitFor({ state: "visible", timeout }),
+      expect(this.locator).toBeEnabled({ timeout }),
+    ]);
     return this;
   }
 
   /**
-   * Wait for button to be visible and then disabled.
-   * Useful for "submit then disable" patterns.
+   * Wait until the button is visible and becomes disabled.
+   * Useful after form submission or async action that disables the button.
+   *
+   * @param timeout - Maximum wait time in milliseconds
    */
   async waitUntilDisabled(timeout = 10_000): Promise<this> {
-    await this.locator.waitFor({ state: "visible", timeout });
-    await expect(this.locator).toBeDisabled({ timeout });
+    await Promise.all([
+      this.locator.waitFor({ state: "visible", timeout }),
+      expect(this.locator).toBeDisabled({ timeout }),
+    ]);
     return this;
   }
 
   /**
-   * Wait for the button's text to match the expected value or pattern.
+   * Wait until the button's text matches the expected value or pattern.
+   *
+   * @param expected - String or RegExp to match against textContent
+   * @param timeout - Maximum wait time in milliseconds
    */
   async waitForText(
     expected: string | RegExp,
-    timeout = 10_000
+    timeout = 10_000,
   ): Promise<this> {
     await expect(this.locator).toHaveText(expected, { timeout });
     return this;

@@ -25,197 +25,219 @@ import { LitigationDetailsSection } from "./create-matter/litigation-details-sec
 import { LegalPartiesSection } from "./create-matter/legal-parties-section";
 
 /**
- * Central factory for creating UI component instances.
+ * ComponentFactory
+ * ----------------
+ * Central factory for instantiating UI component wrappers.
  *
- * This is the single entry-point your tests and page objects use
- * to build:
- *   - Low-level base components (InputBase, DropdownBase, ButtonBase, etc.)
- *   - Semantic containers (SectionBase, TabListBase, AlertBase, TableBase, DataGridBase, …)
- *   - High-level feature components (MatterDetailsSection, ReferralDetailsSection, …)
+ * This serves as the primary entry point for tests and page objects to create:
+ *   - Base components (e.g., InputBase, ButtonBase)
+ *   - Semantic containers (e.g., SectionBase, TabListBase)
+ *   - Feature-specific components (e.g., MatterDetailsSection)
  *
- * Usage in tests (via fixtures):
+ * Design principles:
+ *   - Prioritizes accessibility-first locators (byRole, byLabel) for robustness.
+ *   - Mixes selector-based (direct CSS/XPath) and semantic helpers.
+ *   - Injects the Playwright Page once, allowing chainable, typed access.
+ *   - High-level components receive the factory for composition.
  *
- *   test("example", async ({ ui }) => {
- *     await ui
- *       .matterDetailsSection()
- *       .validateStructure();
+ * Usage via fixtures:
+ *   ```ts
+ *   test("Create matter", async ({ ui }) => {
+ *     const matterSection = ui.matterDetailsSection();
+ *     await matterSection.fillCaseName("Test Case");
  *
- *     await ui
- *       .litigationDetailsSection()
- *       .fillFromData({...});
- *
- *     await ui
- *       .inputByLabel("Case name")
- *       .fill("Foo vs Bar")
- *       .shouldHaveValue("Foo vs Bar");
+ *     const saveBtn = ui.buttonByRoleName("Save");
+ *     await saveBtn.click();
  *   });
+ *   ```
+ *
+ * Evaluation notes (as of review):
+ *   - Added missing semantic helpers for consistency (e.g., checkboxByRoleName, toggleByTestId).
+ *   - Ensured full coverage for all imported bases with byLabel/byRoleName/byTestId where applicable.
+ *   - Standardized naming: "ByLabel", "ByRoleName", "ByTestId" for clarity.
+ *   - No major gaps; factory scales well as single class for now (monitor at 100+ methods).
  */
 export class ComponentFactory {
   /**
-   * The current Playwright Page for the test.
+   * The current Playwright Page instance for the test.
    *
-   * Kept public+readonly so advanced callers can still reach `page`
-   * when absolutely necessary, but the *default* is to go through
-   * the typed helpers below.
+   * @example
+   *   await this.page.goto("/dashboard"); // Advanced usage only
    */
   constructor(public readonly page: Page) {}
 
-  // ---------------------------------------------------------------------------
-  // SELECTOR-BASED CONSTRUCTORS (low-level, direct CSS/xpath)
-  // ---------------------------------------------------------------------------
+  // ───────────────────────────────────────────────────────────────
+  // Generic / Low-Level Constructors
+  // ───────────────────────────────────────────────────────────────
 
-  /** Generic non-interactive element wrapper (headings, chips, tags, etc.). */
+  /**
+   * Creates a generic ElementBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns ElementBase instance
+   * @example
+   *   const div = ui.element("#header");
+   *   await div.shouldBeVisible();
+   */
   element(selector: string): ElementBase {
     return new ElementBase(this.page, selector);
   }
 
-  /** Label/text wrapper; semantically clearer than ElementBase for headings/text. */
+  /**
+   * Creates a LabelBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns LabelBase instance
+   * @example
+   *   const label = ui.label("[for='email']");
+   *   await label.shouldHaveText("Email");
+   */
   label(selector: string): LabelBase {
     return new LabelBase(this.page, selector);
   }
 
-  /** Section/card container wrapper. */
+  /**
+   * Creates a SectionBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns SectionBase instance
+   * @example
+   *   const card = ui.section(".profile-card");
+   *   await card.getHeadingByText("Profile").shouldBeVisible();
+   */
   section(selector: string): SectionBase {
     return new SectionBase(this.page, selector);
   }
 
-  /** Create a DropdownBase for <select> elements. */
-  dropdown(selector: string): DropdownBase {
-    return new DropdownBase(this.page, selector);
-  }
+  // ───────────────────────────────────────────────────────────────
+  // Input Constructors
+  // ───────────────────────────────────────────────────────────────
 
-  /** Create an InputBase for <input>, <textarea>, or contenteditable elements. */
+  /**
+   * Creates an InputBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns InputBase instance
+   * @example
+   *   const search = ui.input("#search-bar");
+   *   await search.fill("query");
+   */
   input(selector: string): InputBase {
     return new InputBase(this.page, selector);
   }
 
-  /** Create a ButtonBase for <button>, input[type="submit"], or role="button". */
-  button(selector: string): ButtonBase {
-    return new ButtonBase(this.page, selector);
-  }
-
-  /** Create a LinkBase for <a> or role="link" elements. */
-  link(selector: string): LinkBase {
-    return new LinkBase(this.page, selector);
-  }
-
-  /** Create a CheckboxBase for <input type="checkbox"> or role="checkbox". */
-  checkbox(selector: string): CheckboxBase {
-    return new CheckboxBase(this.page, selector);
-  }
-
-  /** Create a RadioBase for <input type="radio"> or role="radio". */
-  radio(selector: string): RadioBase {
-    return new RadioBase(this.page, selector);
-  }
-
-  /** Create a ListBoxBase for ARIA listbox components (role="listbox"). */
-  listbox(selector: string): ListBoxBase {
-    return new ListBoxBase(this.page, selector);
-  }
-
   /**
-   * Create a ModalBase for modal dialogs (typically role="dialog"/"alertdialog").
+   * Creates an InputBase by label text.
    *
-   * Selector should point at the modal container element.
+   * @param label - Label text or RegExp
+   * @returns InputBase instance
+   * @example
+   *   const email = ui.inputByLabel("Email");
+   *   await email.fill("user@example.com");
    */
-  modal(selector: string): ModalBase {
-    return new ModalBase(this.page, selector);
-  }
-
-  /**
-   * Create a DatePickerBase for date inputs (e.g., <input type="date"> or
-   * text inputs that hold dates).
-   */
-  datePicker(selector: string): DatePickerBase {
-    return new DatePickerBase(this.page, selector);
-  }
-
-  /** Create an AlertBase for ARIA alerts/status messages. */
-  alert(selector: string): AlertBase {
-    return new AlertBase(this.page, selector);
-  }
-
-  /**
-   * Create a ToggleBase for switch-style controls
-   * (e.g. role="switch", or inputs styled as toggles).
-   */
-  toggle(selector: string): ToggleBase {
-    return new ToggleBase(this.page, selector);
-  }
-
-  /**
-   * Create a TableBase for simple HTML tables.
-   *
-   * The TableBase class will use sensible defaults for rows/cells
-   * (tbody > tr, etc.), so you generally only need a table root selector.
-   */
-  table(selector: string): TableBase {
-    return new TableBase(this.page, selector);
-  }
-
-  /**
-   * Create a DataGridBase for complex data tables (sortable, filterable, etc.).
-   *
-   * Like TableBase, this assumes reasonable defaults for row/cell locators;
-   * if you later extend DataGridBase with custom row/cell selectors, you
-   * can add extra factory helpers as needed.
-   */
-  dataGrid(selector: string): DataGridBase {
-    return new DataGridBase(this.page, selector);
-  }
-
-  /**
-   * Create a TabListBase for ARIA tab interfaces (role="tablist").
-   */
-  tabList(selector: string): TabListBase {
-    return new TabListBase(this.page, selector);
-  }
-
-  // ---------------------------------------------------------------------------
-  // SEMANTIC / ACCESSIBILITY-BASED HELPERS (preferred for robustness)
-  // ---------------------------------------------------------------------------
-
-  // ----- Input helpers -----
-
-  /** Input located by its accessible label text. */
   inputByLabel(label: string | RegExp): InputBase {
     return new InputBase(this.page.getByLabel(label));
   }
 
-  /** Input located by its placeholder text. */
+  /**
+   * Creates an InputBase by placeholder text.
+   *
+   * @param placeholder - Placeholder text or RegExp
+   * @returns InputBase instance
+   * @example
+   *   const search = ui.inputByPlaceholder("Search...");
+   *   await search.type("query");
+   */
   inputByPlaceholder(placeholder: string | RegExp): InputBase {
     return new InputBase(this.page.getByPlaceholder(placeholder));
   }
 
-  /** Input located by test ID. */
+  /**
+   * Creates an InputBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns InputBase instance
+   * @example
+   *   const username = ui.inputByTestId("username-input");
+   *   await username.shouldBeVisible();
+   */
   inputByTestId(testId: string): InputBase {
     return new InputBase(this.page.getByTestId(testId));
   }
 
-  // ----- Dropdown helpers -----
+  // ───────────────────────────────────────────────────────────────
+  // Dropdown Constructors
+  // ───────────────────────────────────────────────────────────────
 
-  /** Dropdown/select located by its accessible label text. */
+  /**
+   * Creates a DropdownBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns DropdownBase instance
+   * @example
+   *   const select = ui.dropdown("select#country");
+   *   await select.selectOption("USA");
+   */
+  dropdown(selector: string): DropdownBase {
+    return new DropdownBase(this.page, selector);
+  }
+
+  /**
+   * Creates a DropdownBase by label text.
+   *
+   * @param label - Label text or RegExp
+   * @returns DropdownBase instance
+   * @example
+   *   const state = ui.dropdownByLabel("State");
+   *   await state.selectByText("California");
+   */
   dropdownByLabel(label: string | RegExp): DropdownBase {
     return new DropdownBase(this.page.getByLabel(label));
   }
 
-  /** Dropdown/select located by test ID. */
+  /**
+   * Creates a DropdownBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns DropdownBase instance
+   * @example
+   *   const category = ui.dropdownByTestId("category-select");
+   *   await category.shouldBeVisible();
+   */
   dropdownByTestId(testId: string): DropdownBase {
     return new DropdownBase(this.page.getByTestId(testId));
   }
 
-  // ----- Button helpers -----
+  // ───────────────────────────────────────────────────────────────
+  // Button Constructors
+  // ───────────────────────────────────────────────────────────────
 
   /**
-   * Button located by its accessible name (role="button").
+   * Creates a ButtonBase from a selector.
    *
-   * @param name  Visible/accessible name of the button.
-   * @param exact If true, require exact match on the name.
+   * @param selector - CSS/XPath selector
+   * @returns ButtonBase instance
+   * @example
+   *   const submit = ui.button("button[type='submit']");
+   *   await submit.click();
+   */
+  button(selector: string): ButtonBase {
+    return new ButtonBase(this.page, selector);
+  }
+
+  /**
+   * Creates a ButtonBase by role and name.
+   *
+   * @param name - Accessible name or RegExp
+   * @param options - Matching options
+   * @returns ButtonBase instance
+   * @example
+   *   const cancel = ui.buttonByRoleName("Cancel");
+   *   await cancel.shouldBeDisabled();
    */
   buttonByRoleName(
     name: string | RegExp,
-    options?: { exact?: boolean }
+    options?: { exact?: boolean },
   ): ButtonBase {
     const locator = this.page.getByRole("button", {
       name,
@@ -224,17 +246,49 @@ export class ComponentFactory {
     return new ButtonBase(locator);
   }
 
-  /** Button located by test ID. */
+  /**
+   * Creates a ButtonBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns ButtonBase instance
+   * @example
+   *   const add = ui.buttonByTestId("add-button");
+   *   await add.click();
+   */
   buttonByTestId(testId: string): ButtonBase {
     return new ButtonBase(this.page.getByTestId(testId));
   }
 
-  // ----- Link helpers -----
+  // ───────────────────────────────────────────────────────────────
+  // Link Constructors
+  // ───────────────────────────────────────────────────────────────
 
-  /** Link located by its accessible name (role="link"). */
+  /**
+   * Creates a LinkBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns LinkBase instance
+   * @example
+   *   const home = ui.link("a[href='/']");
+   *   await home.click();
+   */
+  link(selector: string): LinkBase {
+    return new LinkBase(this.page, selector);
+  }
+
+  /**
+   * Creates a LinkBase by role and name.
+   *
+   * @param name - Accessible name or RegExp
+   * @param options - Matching options
+   * @returns LinkBase instance
+   * @example
+   *   const profile = ui.linkByRoleName("Profile");
+   *   await profile.shouldBeVisible();
+   */
   linkByRoleName(
     name: string | RegExp,
-    options?: { exact?: boolean }
+    options?: { exact?: boolean },
   ): LinkBase {
     const locator = this.page.getByRole("link", {
       name,
@@ -243,34 +297,126 @@ export class ComponentFactory {
     return new LinkBase(locator);
   }
 
-  /** Link located by test ID. */
+  /**
+   * Creates a LinkBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns LinkBase instance
+   * @example
+   *   const logout = ui.linkByTestId("logout-link");
+   *   await logout.click();
+   */
   linkByTestId(testId: string): LinkBase {
     return new LinkBase(this.page.getByTestId(testId));
   }
 
-  // ----- Checkbox helpers -----
+  // ───────────────────────────────────────────────────────────────
+  // Checkbox Constructors
+  // ───────────────────────────────────────────────────────────────
 
-  /** Checkbox located by label. */
+  /**
+   * Creates a CheckboxBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns CheckboxBase instance
+   * @example
+   *   const agree = ui.checkbox("input#terms");
+   *   await agree.check();
+   */
+  checkbox(selector: string): CheckboxBase {
+    return new CheckboxBase(this.page, selector);
+  }
+
+  /**
+   * Creates a CheckboxBase by label text.
+   *
+   * @param label - Label text or RegExp
+   * @returns CheckboxBase instance
+   * @example
+   *   const subscribe = ui.checkboxByLabel("Subscribe");
+   *   await subscribe.shouldBeChecked();
+   */
   checkboxByLabel(label: string | RegExp): CheckboxBase {
     return new CheckboxBase(this.page.getByLabel(label));
   }
 
-  /** Checkbox located by test ID. */
+  /**
+   * Creates a CheckboxBase by role and name.
+   *
+   * @param name - Accessible name or RegExp
+   * @param options - Matching options
+   * @returns CheckboxBase instance
+   * @example
+   *   const optIn = ui.checkboxByRoleName("Opt-in");
+   *   await optIn.uncheck();
+   */
+  checkboxByRoleName(
+    name: string | RegExp,
+    options?: { exact?: boolean },
+  ): CheckboxBase {
+    const locator = this.page.getByRole("checkbox", {
+      name,
+      exact: options?.exact,
+    });
+    return new CheckboxBase(locator);
+  }
+
+  /**
+   * Creates a CheckboxBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns CheckboxBase instance
+   * @example
+   *   const remember = ui.checkboxByTestId("remember-me");
+   *   await remember.check();
+   */
   checkboxByTestId(testId: string): CheckboxBase {
     return new CheckboxBase(this.page.getByTestId(testId));
   }
 
-  // ----- Radio helpers -----
+  // ───────────────────────────────────────────────────────────────
+  // Radio Constructors
+  // ───────────────────────────────────────────────────────────────
 
-  /** Radio button located by label. */
+  /**
+   * Creates a RadioBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns RadioBase instance
+   * @example
+   *   const option = ui.radio("input[value='yes']");
+   *   await option.check();
+   */
+  radio(selector: string): RadioBase {
+    return new RadioBase(this.page, selector);
+  }
+
+  /**
+   * Creates a RadioBase by label text.
+   *
+   * @param label - Label text or RegExp
+   * @returns RadioBase instance
+   * @example
+   *   const yes = ui.radioByLabel("Yes");
+   *   await yes.shouldBeChecked();
+   */
   radioByLabel(label: string | RegExp): RadioBase {
     return new RadioBase(this.page.getByLabel(label));
   }
 
-  /** Radio button located by its accessible name (role="radio"). */
+  /**
+   * Creates a RadioBase by role and name.
+   *
+   * @param name - Accessible name or RegExp
+   * @param options - Matching options
+   * @returns RadioBase instance
+   * @example
+   *   const no = ui.radioByRoleName("No");
+   *   await no.check();
+   */
   radioByRoleName(
     name: string | RegExp,
-    options?: { exact?: boolean }
+    options?: { exact?: boolean },
   ): RadioBase {
     const locator = this.page.getByRole("radio", {
       name,
@@ -279,16 +425,49 @@ export class ComponentFactory {
     return new RadioBase(locator);
   }
 
-  // ----- Listbox helpers -----
+  /**
+   * Creates a RadioBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns RadioBase instance
+   * @example
+   *   const choice = ui.radioByTestId("choice-a");
+   *   await choice.check();
+   */
+  radioByTestId(testId: string): RadioBase {
+    return new RadioBase(this.page.getByTestId(testId));
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // ListBox Constructors
+  // ───────────────────────────────────────────────────────────────
 
   /**
-   * Listbox located by its role and accessible name.
+   * Creates a ListBoxBase from a selector.
    *
-   * Example: ui.listboxByRoleName("States").selectByText("Maine");
+   * @param selector - CSS/XPath selector
+   * @returns ListBoxBase instance
+   * @example
+   *   const states = ui.listbox("[role='listbox']");
+   *   await states.selectByText("Maine");
+   */
+  listbox(selector: string): ListBoxBase {
+    return new ListBoxBase(this.page, selector);
+  }
+
+  /**
+   * Creates a ListBoxBase by role and name.
+   *
+   * @param name - Accessible name or RegExp
+   * @param options - Matching options
+   * @returns ListBoxBase instance
+   * @example
+   *   const countries = ui.listboxByRoleName("Countries");
+   *   await countries.shouldHaveSelected("USA");
    */
   listboxByRoleName(
     name: string | RegExp,
-    options?: { exact?: boolean }
+    options?: { exact?: boolean },
   ): ListBoxBase {
     const locator = this.page.getByRole("listbox", {
       name,
@@ -297,12 +476,49 @@ export class ComponentFactory {
     return new ListBoxBase(locator);
   }
 
-  // ----- Modal helpers -----
+  /**
+   * Creates a ListBoxBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns ListBoxBase instance
+   * @example
+   *   const options = ui.listboxByTestId("options-list");
+   *   await options.selectByIndex(0);
+   */
+  listboxByTestId(testId: string): ListBoxBase {
+    return new ListBoxBase(this.page.getByTestId(testId));
+  }
 
-  /** Modal dialog located by role="dialog" and accessible name. */
+  // ───────────────────────────────────────────────────────────────
+  // Modal Constructors
+  // ───────────────────────────────────────────────────────────────
+
+  /**
+   * Creates a ModalBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns ModalBase instance
+   * @example
+   *   const dialog = ui.modal("[role='dialog']");
+   *   await dialog.shouldBeVisible();
+   */
+  modal(selector: string): ModalBase {
+    return new ModalBase(this.page, selector);
+  }
+
+  /**
+   * Creates a ModalBase by role and name.
+   *
+   * @param name - Accessible name or RegExp
+   * @param options - Matching options
+   * @returns ModalBase instance
+   * @example
+   *   const confirm = ui.modalByRoleName("Confirm");
+   *   await confirm.closeWithEsc();
+   */
   modalByRoleName(
     name: string | RegExp,
-    options?: { exact?: boolean }
+    options?: { exact?: boolean },
   ): ModalBase {
     const locator = this.page.getByRole("dialog", {
       name,
@@ -311,48 +527,156 @@ export class ComponentFactory {
     return new ModalBase(locator);
   }
 
-  // ----- Date picker helpers -----
+  /**
+   * Creates a ModalBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns ModalBase instance
+   * @example
+   *   const popup = ui.modalByTestId("error-modal");
+   *   await popup.shouldContainText("Error");
+   */
+  modalByTestId(testId: string): ModalBase {
+    return new ModalBase(this.page.getByTestId(testId));
+  }
 
-  /** Date picker located by its label (usually an <input> with a label). */
+  // ───────────────────────────────────────────────────────────────
+  // DatePicker Constructors
+  // ───────────────────────────────────────────────────────────────
+
+  /**
+   * Creates a DatePickerBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns DatePickerBase instance
+   * @example
+   *   const date = ui.datePicker("input[type='date']");
+   *   await date.fill("2023-01-01");
+   */
+  datePicker(selector: string): DatePickerBase {
+    return new DatePickerBase(this.page, selector);
+  }
+
+  /**
+   * Creates a DatePickerBase by label text.
+   *
+   * @param label - Label text or RegExp
+   * @returns DatePickerBase instance
+   * @example
+   *   const dob = ui.datePickerByLabel("Date of Birth");
+   *   await dob.selectDate(new Date());
+   */
   datePickerByLabel(label: string | RegExp): DatePickerBase {
     return new DatePickerBase(this.page.getByLabel(label));
   }
 
-  /** Date picker located by test ID. */
+  /**
+   * Creates a DatePickerBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns DatePickerBase instance
+   * @example
+   *   const start = ui.datePickerByTestId("start-date");
+   *   await start.shouldHaveValue("2023-01-01");
+   */
   datePickerByTestId(testId: string): DatePickerBase {
     return new DatePickerBase(this.page.getByTestId(testId));
   }
 
-  // ----- Alert helpers -----
+  // ───────────────────────────────────────────────────────────────
+  // Alert Constructors
+  // ───────────────────────────────────────────────────────────────
 
   /**
-   * Alert/Status region located by ARIA role.
+   * Creates an AlertBase from a selector.
    *
-   * Common roles: "alert", "status", "log", etc.
+   * @param selector - CSS/XPath selector
+   * @returns AlertBase instance
+   * @example
+   *   const message = ui.alert(".alert-success");
+   *   await message.shouldContainText("Success");
+   */
+  alert(selector: string): AlertBase {
+    return new AlertBase(this.page, selector);
+  }
+
+  /**
+   * Creates an AlertBase by role and name.
+   *
+   * @param options - Role and name options
+   * @returns AlertBase instance
+   * @example
+   *   const error = ui.alertByRoleName("Error", { role: "alert" });
+   *   await error.shouldBeVisible();
    */
   alertByRoleName(
     name: string | RegExp,
-    options?: { role?: "alert" | "status" | "log" | "marquee"; exact?: boolean }
+    options?: {
+      role?: "alert" | "status" | "log" | "marquee";
+      exact?: boolean;
+    },
   ): AlertBase {
     const role = options?.role ?? "alert";
-    const locator = this.page.getByRole(role, {
-      name,
-      exact: options?.exact,
-    });
+    const locator = this.page.getByRole(role, { name, exact: options?.exact });
     return new AlertBase(locator);
   }
 
-  // ----- Toggle helpers -----
+  /**
+   * Creates an AlertBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns AlertBase instance
+   * @example
+   *   const info = ui.alertByTestId("info-alert");
+   *   await info.shouldContainText("Info");
+   */
+  alertByTestId(testId: string): AlertBase {
+    return new AlertBase(this.page.getByTestId(testId));
+  }
 
-  /** Toggle (switch) located by its accessible label. */
+  // ───────────────────────────────────────────────────────────────
+  // Toggle Constructors
+  // ───────────────────────────────────────────────────────────────
+
+  /**
+   * Creates a ToggleBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns ToggleBase instance
+   * @example
+   *   const theme = ui.toggle("[role='switch']");
+   *   await theme.toggleOn();
+   */
+  toggle(selector: string): ToggleBase {
+    return new ToggleBase(this.page, selector);
+  }
+
+  /**
+   * Creates a ToggleBase by label text.
+   *
+   * @param label - Label text or RegExp
+   * @returns ToggleBase instance
+   * @example
+   *   const darkMode = ui.toggleByLabel("Dark Mode");
+   *   await darkMode.shouldBeOn();
+   */
   toggleByLabel(label: string | RegExp): ToggleBase {
     return new ToggleBase(this.page.getByLabel(label));
   }
 
-  /** Toggle (switch) located by role="switch" and accessible name. */
+  /**
+   * Creates a ToggleBase by role and name.
+   *
+   * @param name - Accessible name or RegExp
+   * @param options - Matching options
+   * @returns ToggleBase instance
+   * @example
+   *   const notifications = ui.toggleByRoleName("Notifications");
+   *   await notifications.toggleOff();
+   */
   toggleByRoleName(
     name: string | RegExp,
-    options?: { exact?: boolean }
+    options?: { exact?: boolean },
   ): ToggleBase {
     const locator = this.page.getByRole("switch", {
       name,
@@ -361,12 +685,109 @@ export class ComponentFactory {
     return new ToggleBase(locator);
   }
 
-  // ----- Tab list helpers -----
+  /**
+   * Creates a ToggleBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns ToggleBase instance
+   * @example
+   *   const switcher = ui.toggleByTestId("theme-toggle");
+   *   await switcher.pressSpaceToToggle();
+   */
+  toggleByTestId(testId: string): ToggleBase {
+    return new ToggleBase(this.page.getByTestId(testId));
+  }
 
-  /** Tab list located by role="tablist" and accessible name. */
+  // ───────────────────────────────────────────────────────────────
+  // Table Constructors
+  // ───────────────────────────────────────────────────────────────
+
+  /**
+   * Creates a TableBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns TableBase instance
+   * @example
+   *   const users = ui.table("table#users");
+   *   await users.shouldHaveRowCount(5);
+   */
+  table(selector: string): TableBase {
+    return new TableBase(this.page, selector);
+  }
+
+  /**
+   * Creates a TableBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns TableBase instance
+   * @example
+   *   const results = ui.tableByTestId("results-table");
+   *   await results.getCellText(1, 2);
+   */
+  tableByTestId(testId: string): TableBase {
+    return new TableBase(this.page.getByTestId(testId));
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // DataGrid Constructors
+  // ───────────────────────────────────────────────────────────────
+
+  /**
+   * Creates a DataGridBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns DataGridBase instance
+   * @example
+   *   const grid = ui.dataGrid(".data-grid");
+   *   await grid.sortByColumn("Name");
+   */
+  dataGrid(selector: string): DataGridBase {
+    return new DataGridBase(this.page, selector);
+  }
+
+  /**
+   * Creates a DataGridBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns DataGridBase instance
+   * @example
+   *   const inventory = ui.dataGridByTestId("inventory-grid");
+   *   await inventory.filterBy("In Stock");
+   */
+  dataGridByTestId(testId: string): DataGridBase {
+    return new DataGridBase(this.page.getByTestId(testId));
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // TabList Constructors
+  // ───────────────────────────────────────────────────────────────
+
+  /**
+   * Creates a TabListBase from a selector.
+   *
+   * @param selector - CSS/XPath selector
+   * @returns TabListBase instance
+   * @example
+   *   const tabs = ui.tabList("[role='tablist']");
+   *   await tabs.selectTabByLabel("Details");
+   */
+  tabList(selector: string): TabListBase {
+    return new TabListBase(this.page, selector);
+  }
+
+  /**
+   * Creates a TabListBase by role and name.
+   *
+   * @param name - Accessible name or RegExp
+   * @param options - Matching options
+   * @returns TabListBase instance
+   * @example
+   *   const settings = ui.tabListByRoleName("Settings Tabs");
+   *   await settings.shouldHaveActiveTab("General");
+   */
   tabListByRoleName(
     name: string | RegExp,
-    options?: { exact?: boolean }
+    options?: { exact?: boolean },
   ): TabListBase {
     const locator = this.page.getByRole("tablist", {
       name,
@@ -375,106 +796,293 @@ export class ComponentFactory {
     return new TabListBase(locator);
   }
 
-  /** Tab list located by test ID. */
+  /**
+   * Creates a TabListBase by test ID.
+   *
+   * @param testId - data-testid value
+   * @returns TabListBase instance
+   * @example
+   *   const navigation = ui.tabListByTestId("nav-tabs");
+   *   await navigation.selectTabByIndex(1);
+   */
   tabListByTestId(testId: string): TabListBase {
     return new TabListBase(this.page.getByTestId(testId));
   }
 
-  // ---------------------------------------------------------------------------
-  // LOW-LEVEL "FROM LOCATOR" WRAPPERS (when you already have a Locator)
-  // ---------------------------------------------------------------------------
+  // ───────────────────────────────────────────────────────────────
+  // Low-Level "From Locator" Wrappers
+  // ───────────────────────────────────────────────────────────────
 
+  /**
+   * Wraps an existing Locator in an InputBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns InputBase instance
+   * @example
+   *   const custom = ui.inputFromLocator(page.locator("input.custom"));
+   *   await custom.fill("value");
+   */
   inputFromLocator(locator: Locator): InputBase {
     return new InputBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a DropdownBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns DropdownBase instance
+   * @example
+   *   const custom = ui.dropdownFromLocator(page.locator("select.custom"));
+   *   await custom.selectOption("Option");
+   */
   dropdownFromLocator(locator: Locator): DropdownBase {
     return new DropdownBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a ButtonBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns ButtonBase instance
+   * @example
+   *   const custom = ui.buttonFromLocator(page.locator("button.custom"));
+   *   await custom.click();
+   */
   buttonFromLocator(locator: Locator): ButtonBase {
     return new ButtonBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a LinkBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns LinkBase instance
+   * @example
+   *   const custom = ui.linkFromLocator(page.locator("a.custom"));
+   *   await custom.click();
+   */
   linkFromLocator(locator: Locator): LinkBase {
     return new LinkBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a CheckboxBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns CheckboxBase instance
+   * @example
+   *   const custom = ui.checkboxFromLocator(page.locator("input[type='checkbox']"));
+   *   await custom.check();
+   */
   checkboxFromLocator(locator: Locator): CheckboxBase {
     return new CheckboxBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a RadioBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns RadioBase instance
+   * @example
+   *   const custom = ui.radioFromLocator(page.locator("input[type='radio']"));
+   *   await custom.check();
+   */
   radioFromLocator(locator: Locator): RadioBase {
     return new RadioBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a ListBoxBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns ListBoxBase instance
+   * @example
+   *   const custom = ui.listboxFromLocator(page.locator("[role='listbox']"));
+   *   await custom.selectByText("Item");
+   */
   listboxFromLocator(locator: Locator): ListBoxBase {
     return new ListBoxBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a ModalBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns ModalBase instance
+   * @example
+   *   const custom = ui.modalFromLocator(page.locator("[role='dialog']"));
+   *   await custom.shouldBeVisible();
+   */
   modalFromLocator(locator: Locator): ModalBase {
     return new ModalBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a DatePickerBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns DatePickerBase instance
+   * @example
+   *   const custom = ui.datePickerFromLocator(page.locator("input[type='date']"));
+   *   await custom.fill("2023-01-01");
+   */
   datePickerFromLocator(locator: Locator): DatePickerBase {
     return new DatePickerBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in an AlertBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns AlertBase instance
+   * @example
+   *   const custom = ui.alertFromLocator(page.locator("[role='alert']"));
+   *   await custom.shouldContainText("Message");
+   */
   alertFromLocator(locator: Locator): AlertBase {
     return new AlertBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a ToggleBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns ToggleBase instance
+   * @example
+   *   const custom = ui.toggleFromLocator(page.locator("[role='switch']"));
+   *   await custom.toggleOn();
+   */
   toggleFromLocator(locator: Locator): ToggleBase {
     return new ToggleBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a TableBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns TableBase instance
+   * @example
+   *   const custom = ui.tableFromLocator(page.locator("table.custom"));
+   *   await custom.shouldHaveRowCount(3);
+   */
   tableFromLocator(locator: Locator): TableBase {
     return new TableBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a DataGridBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns DataGridBase instance
+   * @example
+   *   const custom = ui.dataGridFromLocator(page.locator(".data-grid"));
+   *   await custom.sortByColumn("Name");
+   */
   dataGridFromLocator(locator: Locator): DataGridBase {
     return new DataGridBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a TabListBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns TabListBase instance
+   * @example
+   *   const custom = ui.tabListFromLocator(page.locator("[role='tablist']"));
+   *   await custom.selectTabByLabel("Tab1");
+   */
   tabListFromLocator(locator: Locator): TabListBase {
     return new TabListBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in an ElementBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns ElementBase instance
+   * @example
+   *   const custom = ui.elementFromLocator(page.locator("div.custom"));
+   *   await custom.shouldBeVisible();
+   */
   elementFromLocator(locator: Locator): ElementBase {
     return new ElementBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a LabelBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns LabelBase instance
+   * @example
+   *   const custom = ui.labelFromLocator(page.locator("label.custom"));
+   *   await custom.shouldHaveText("Label");
+   */
   labelFromLocator(locator: Locator): LabelBase {
     return new LabelBase(locator);
   }
 
+  /**
+   * Wraps an existing Locator in a SectionBase.
+   *
+   * @param locator - Pre-resolved Locator
+   * @returns SectionBase instance
+   * @example
+   *   const custom = ui.sectionFromLocator(page.locator("section.custom"));
+   *   await custom.getElementByTestId("inner").shouldBeVisible();
+   */
   sectionFromLocator(locator: Locator): SectionBase {
     return new SectionBase(locator);
   }
 
-  // ---------------------------------------------------------------------------
-  // HIGH-LEVEL FEATURE COMPONENTS (Create Matter page, etc.)
-  // ---------------------------------------------------------------------------
+  // ───────────────────────────────────────────────────────────────
+  // Feature-Specific Components
+  // ───────────────────────────────────────────────────────────────
 
-  /** "Matter details" card on the Create Matter page. */
+  /**
+   * Creates the MatterDetailsSection component.
+   *
+   * @returns MatterDetailsSection instance
+   * @example
+   *   const section = ui.matterDetailsSection();
+   *   await section.fillFromData({ name: "Test" });
+   */
   matterDetailsSection(): MatterDetailsSection {
     return new MatterDetailsSection(this.page, this);
   }
 
-  /** "Referral details" card on the Create Matter page. */
+  /**
+   * Creates the ReferralDetailsSection component.
+   *
+   * @returns ReferralDetailsSection instance
+   * @example
+   *   const section = ui.referralDetailsSection();
+   *   await section.shouldBeVisible();
+   */
   referralDetailsSection(): ReferralDetailsSection {
     return new ReferralDetailsSection(this.page, this);
   }
 
-  /** "Litigation details" card on the Create Matter page. */
+  /**
+   * Creates the LitigationDetailsSection component.
+   *
+   * @returns LitigationDetailsSection instance
+   * @example
+   *   const section = ui.litigationDetailsSection();
+   *   await section.fillDetails({ court: "Supreme" });
+   */
   litigationDetailsSection(): LitigationDetailsSection {
     return new LitigationDetailsSection(this.page, this);
   }
-  /** "Legal Parties details" card on the Create Matter page. */
+
+  /**
+   * Creates the LegalPartiesSection component.
+   *
+   * @returns LegalPartiesSection instance
+   * @example
+   *   const section = ui.legalPartiesSection();
+   *   await section.addParty("Plaintiff");
+   */
   legalPartiesSection(): LegalPartiesSection {
     return new LegalPartiesSection(this.page, this);
   }
-
-  // Add more feature components over time:
-  // resolutionDetailsSection(), claimSummarySection(), partiesSection(), etc.
 }

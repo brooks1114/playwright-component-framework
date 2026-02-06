@@ -5,137 +5,171 @@ import { InputBase } from "./input-base";
 /**
  * DatePickerBase
  * --------------
- * Specialized base class for date-picker inputs, typically:
- *   - <input type="date">
- *   - Custom date inputs that expose a "YYYY-MM-DD" style value
+ * Specialized base class for date picker controls in React applications.
  *
- * Extends InputBase and adds date-specific helpers for setting,
- * reading, and asserting date values in the standard "YYYY-MM-DD"
- * format used by native date inputs.
+ * Designed for:
+ * - Native `<input type="date">` elements
+ * - Custom date inputs that expose or accept `YYYY-MM-DD` formatted values
+ * - Date fields where the underlying value is ISO-like date string
  *
- * It does NOT try to manipulate complex popup calendars (month views,
- * year pickers, etc.). It focuses on the underlying input value. You
- * can always extend this class if you want more app-specific behavior.
+ * Extends `InputBase`, inheriting:
+ * - `fill()`, `clear()`, `focus()`, `blur()`, `shouldHaveValue()`, etc.
+ * - Visibility, enabled/disabled, placeholder, attribute assertions
  *
- * Construction patterns:
- *  - Selector-based:
- *      const dp = new DatePickerBase(page, "#startDate");
- *  - Locator-based:
- *      const dp = new DatePickerBase(page.getByLabel("Start date"));
+ * **Does NOT** handle complex calendar popup interactions (month/year navigation,
+ * day selection, custom calendar widgets). Focus is on the **input value** itself.
+ * For calendar-specific testing, create a subclass or separate `CalendarPopupBase`.
  *
- * Example usage with your ComponentFactory:
+ * @extends InputBase
  *
- *   const $ = new ComponentFactory(page);
- *   const startDate = $.datePickerByLabel("Start date");
+ * @example
+ * // Recommended: via ComponentFactory
+ * const $ = new ComponentFactory(page);
+ * const birthDate = $.datePickerByLabel("Date of birth");
  *
- *   await startDate
- *     .shouldBeVisible()
- *     .setDate(new Date(2025, 0, 1)) // Jan 1, 2025
- *     .shouldHaveDate(new Date(2025, 0, 1));
+ * await birthDate
+ *   .shouldBeVisible()
+ *   .shouldBeEnabled()
+ *   .setDate(new Date(1990, 5, 15))           // June 15, 1990
+ *   .shouldHaveDate(new Date(1990, 5, 15));
+ *
+ * @example
+ * // Direct construction
+ * const startDate = new DatePickerBase(
+ *   page.getByLabel("Project start date")
+ * );
+ * await startDate.setRelativeToToday(7).shouldNotBeEmpty();
  */
 export class DatePickerBase extends InputBase {
   // ───────────────────────────────────────────────────────────────
-  // Constructors (overloads)
+  // Constructors
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and a selector string (CSS/xpath/etc).
+   * Creates a DatePickerBase from a Page and selector string.
    *
-   * @example
-   *   const dp = new DatePickerBase(page, "#startDate");
+   * @param page - Playwright Page instance
+   * @param selector - CSS/XPath selector targeting the date input
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator (e.g., page.getByLabel()).
+   * Creates a DatePickerBase from an existing Locator (preferred).
    *
-   * @example
-   *   const dp = new DatePickerBase(page.getByLabel("Start date"));
+   * @param locator - Locator targeting the `<input>` or custom date field
    */
   constructor(locator: Locator);
 
   constructor(pageOrLocator: Page | Locator, selector?: string) {
     if (selector !== undefined) {
-      // Usage: new DatePickerBase(page, "#startDate")
       super(pageOrLocator as Page, selector);
     } else {
-      // Usage: new DatePickerBase(page.getByLabel("Start date"))
       super(pageOrLocator as Locator);
     }
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Internal helpers
+  // Internal Date Formatting & Parsing Helpers
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Format a Date object into "YYYY-MM-DD" for <input type="date">.
+   * Formats a Date object to the standard "YYYY-MM-DD" string expected
+   * by native `<input type="date">` and most custom date inputs.
+   *
+   * @param date - Date to format
+   * @returns "YYYY-MM-DD" string
    */
   private formatDate(date: Date): string {
     const year = date.getFullYear();
-    const month = `${date.getMonth() + 1}`.padStart(2, "0");
-    const day = `${date.getDate()}`.padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   }
 
   /**
-   * Parse "YYYY-MM-DD" into a Date (local), or null if invalid/empty.
+   * Parses a "YYYY-MM-DD" string into a local Date object.
+   *
+   * @param value - Raw input value (expected "YYYY-MM-DD")
+   * @returns Date object or `null` if invalid or empty
    */
   private parseDate(value: string): Date | null {
-    if (!value) return null;
-    const [year, month, day] = value.split("-").map((v) => Number(v));
-    if (!year || !month || !day) return null;
-    return new Date(year, month - 1, day);
+    if (!value || value.trim() === "") return null;
+
+    const parts = value.split("-");
+    if (parts.length !== 3) return null;
+
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    const day = Number(parts[2]);
+
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+
+    // Create date and validate it matches input (prevents invalid like 2023-04-31)
+    const date = new Date(year, month - 1, day);
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() + 1 !== month ||
+      date.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return date;
   }
 
   /**
-   * Add days to a given Date and return a new Date instance.
-   * Negative values move backward in time.
+   * Returns a new Date shifted by the given number of days.
+   *
+   * @param date - Starting date
+   * @param days - Positive = future, negative = past
    */
   private plusDays(date: Date, days: number): Date {
-    const copy = new Date(date.getTime());
-    copy.setDate(copy.getDate() + days);
-    return copy;
+    const result = new Date(date.getTime());
+    result.setDate(result.getDate() + days);
+    return result;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Date-specific actions
+  // Date-Specific Actions
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Set the underlying date input to the given Date value,
-   * using the native "YYYY-MM-DD" format.
+   * Sets the date picker to the specified Date using "YYYY-MM-DD" format.
+   *
+   * @param date - The target date
+   * @returns This instance (for chaining)
    */
   async setDate(date: Date): Promise<this> {
-    const value = this.formatDate(date);
-    await this.fill(value);
+    const formatted = this.formatDate(date);
+    await this.fill(formatted);
     return this;
   }
 
   /**
-   * Set the date to "today" (based on the current local Date).
+   * Sets the date picker to today's date (local time).
+   *
+   * @returns This instance (for chaining)
    */
   async setToday(): Promise<this> {
-    const today = new Date();
-    return this.setDate(today);
+    return this.setDate(new Date());
   }
 
   /**
-   * Set the date relative to today, e.g.:
-   *  - daysOffset = +7 → one week in the future
-   *  - daysOffset = -1 → yesterday
+   * Sets the date relative to today (e.g. +7 = next week, -30 = one month ago).
+   *
+   * @param daysOffset - Number of days from today (positive = future)
+   * @returns This instance (for chaining)
    */
   async setRelativeToToday(daysOffset: number): Promise<this> {
-    const today = new Date();
-    const target = this.plusDays(today, daysOffset);
+    const target = this.plusDays(new Date(), daysOffset);
     return this.setDate(target);
   }
 
   /**
-   * Set the underlying date input to a literal string value.
+   * Directly fills the input with a raw string value.
+   * Useful for testing invalid formats, boundary values, or browser-specific behavior.
    *
-   * Use this when you want full control over the value passed
-   * to the input (e.g., boundary/invalid/string tests).
+   * @param value - Raw string to set (e.g. "2025-02-30", "invalid")
    */
   async setRawValue(value: string): Promise<this> {
     await this.fill(value);
@@ -143,10 +177,10 @@ export class DatePickerBase extends InputBase {
   }
 
   /**
-   * Open the calendar popup, if the date-picker uses one.
+   * Attempts to open the date picker popup/calendar by focusing and clicking.
+   * Works for native `<input type="date">` in most browsers and many custom pickers.
    *
-   * For native <input type="date"> this is browser-specific, but
-   * for most custom components, clicking the input opens the calendar.
+   * @remarks Behavior is browser-dependent for native inputs.
    */
   async openCalendar(): Promise<this> {
     await this.focus();
@@ -155,7 +189,8 @@ export class DatePickerBase extends InputBase {
   }
 
   /**
-   * Close the calendar popup via Escape key.
+   * Closes the calendar popup by pressing Escape key.
+   * Common pattern in both native and custom date pickers.
    */
   async closeCalendarWithEsc(): Promise<this> {
     await this.asLocator().page().keyboard.press("Escape");
@@ -167,16 +202,18 @@ export class DatePickerBase extends InputBase {
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Get the raw value from the input (commonly "YYYY-MM-DD").
+   * Gets the raw string value of the input (usually "YYYY-MM-DD" or empty).
    *
-   * Note: this is just the underlying string; it may be empty or invalid.
+   * @returns Current value attribute/string
    */
   async getRawValue(): Promise<string> {
     return await this.getValue();
   }
 
   /**
-   * Get the current value as a Date, or null if empty/invalid.
+   * Parses and returns the current value as a Date object.
+   *
+   * @returns Date object or `null` if empty or invalid
    */
   async getDate(): Promise<Date | null> {
     const value = await this.getValue();
@@ -188,10 +225,9 @@ export class DatePickerBase extends InputBase {
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Assert the date-picker has an exact raw value (string or RegExp).
+   * Asserts the raw input value matches the expected string or pattern.
    *
-   * This is useful for boundary/invalid cases where you care about
-   * the exact contents of the field, not just valid Date objects.
+   * @param expected - Exact string or RegExp
    */
   async shouldHaveRawValue(expected: string | RegExp): Promise<this> {
     await expect(this.asLocator()).toHaveValue(expected);
@@ -199,9 +235,10 @@ export class DatePickerBase extends InputBase {
   }
 
   /**
-   * Assert the date-picker has a specific Date value.
+   * Asserts the date picker contains the exact expected Date.
+   * Compares formatted "YYYY-MM-DD" values.
    *
-   * Compares against the "YYYY-MM-DD" formatted value.
+   * @param expected - Date to compare against
    */
   async shouldHaveDate(expected: Date): Promise<this> {
     const formatted = this.formatDate(expected);
@@ -210,12 +247,21 @@ export class DatePickerBase extends InputBase {
   }
 
   /**
-   * Assert the date-picker is empty (no value).
-   *
-   * This is just a date-specific alias for InputBase.shouldBeEmpty().
+   * Asserts the date picker is empty (value = "").
    */
   async shouldBeEmptyDate(): Promise<this> {
     await expect(this.asLocator()).toHaveValue("");
+    return this;
+  }
+
+  /**
+   * Asserts the current date is today (local date).
+   *
+   * @remarks Uses local timezone — be careful in CI/cross-region tests.
+   */
+  async shouldHaveToday(): Promise<this> {
+    const todayFormatted = this.formatDate(new Date());
+    await expect(this.asLocator()).toHaveValue(todayFormatted);
     return this;
   }
 
@@ -224,20 +270,24 @@ export class DatePickerBase extends InputBase {
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Wait for the date-picker to have a specific raw value.
+   * Waits until the raw input value matches the expected value/pattern.
+   *
+   * @param expected - String or RegExp to wait for
+   * @param timeout - Max wait time (ms)
    */
   async waitForRawValue(
     expected: string | RegExp,
-    timeout = 10_000
+    timeout = 10_000,
   ): Promise<this> {
     await expect(this.asLocator()).toHaveValue(expected, { timeout });
     return this;
   }
 
   /**
-   * Wait for the date-picker to have a specific Date value.
+   * Waits until the parsed date matches the expected Date.
    *
-   * Compares against the "YYYY-MM-DD" formatted value.
+   * @param expected - Target Date
+   * @param timeout - Max wait time (ms)
    */
   async waitForDate(expected: Date, timeout = 10_000): Promise<this> {
     const formatted = this.formatDate(expected);
@@ -246,7 +296,9 @@ export class DatePickerBase extends InputBase {
   }
 
   /**
-   * Wait until the date-picker becomes empty (no value).
+   * Waits until the date picker becomes empty.
+   *
+   * @param timeout - Max wait time (ms)
    */
   async waitUntilEmptyDate(timeout = 10_000): Promise<this> {
     await expect(this.asLocator()).toHaveValue("", { timeout });

@@ -20,7 +20,7 @@ test("Matter details — structure & behavior", async ({ page, ui }) => {
   await matterDetails.matterTypeDropdown.selectByText("Suits");
 
   await matterDetails.matterSubtypeDropdown.selectByText(
-    MATTER_SUBTYPE_OPTIONS.SUITS.COURT_APPROVED.value
+    MATTER_SUBTYPE_OPTIONS.SUITS.COURT_APPROVED.value,
   );
 });
 
@@ -89,10 +89,8 @@ test.describe("Referral Details Section", () => {
     await assignedTo.shouldBeRequired();
     await assignedTo.shouldHaveAccessibleName(/Adjuster/i);
 
-    //     After shouldBeVisible() resolves, .then() receives the resolved value → the InputBase instance.
-
+    // After shouldBeVisible() resolves, .then() receives the resolved value → the InputBase instance.
     // Then you call another async should*() on that same instance.
-
     // That returns another Promise<InputBase> → which allows another .then(), and so on.
 
     await section.assignedToInput

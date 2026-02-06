@@ -4,86 +4,103 @@ import { Page, Locator, expect } from "@playwright/test";
 /**
  * LinkBase
  * --------
- * Chainable, type-safe base class for <a> anchor links.
+ * Chainable, type-safe base class for `<a>` anchor elements and link-like controls in React applications.
  *
- * This wraps a Playwright Locator and provides:
- *  - Click & navigation helpers (clickAndNavigate, clickAndWaitForNewPage, clickAndWaitForUrl)
- *  - State queries (isVisible, isDisabled, getHref, getTarget, getRel)
- *  - Assertions (shouldHaveText, shouldHaveHref, shouldOpenInNewTab, etc.)
- *  - Waiters (waitUntilReady, waitForHref, waitForText)
+ * Supports:
+ * - Standard navigation links
+ * - Router links (React Router, Next.js, etc.)
+ * - External links (`target="_blank"`, `rel="noopener noreferrer"`)
+ * - Download links (`download` attribute)
+ * - In-page anchor links (`#section-id`)
  *
- * Construction patterns:
- *  - Selector-based (legacy / fallback):
- *      const link = new LinkBase(page, 'a[href="/dashboard"]');
- *  - Locator-based (preferred, used by ComponentFactory):
- *      const link = new LinkBase(page.getByRole("link", { name: "Dashboard" }));
+ * Provides fluent, chainable methods for:
+ * - Navigation with waiting
+ * - Attribute reading and assertion
+ * - Interaction (click, hover, focus, keyboard)
+ * - Visibility, accessibility, and position checks
  *
- * Example usage with your ComponentFactory:
+ * @example
+ * // Using ComponentFactory (recommended)
+ * const $ = new ComponentFactory(page);
+ * const docsLink = $.linkByRole("Documentation");
  *
- *   const $ = new ComponentFactory(page);
- *   const dashboardLink = $.linkByRoleName("Dashboard");
+ * await docsLink
+ *   .shouldBeVisible()
+ *   .shouldBeEnabled()
+ *   .shouldHaveHref(/docs/)
+ *   .shouldOpenInNewTab()
+ *   .clickAndWaitForNewPage();
  *
- *   await dashboardLink
- *     .shouldBeVisible()
- *     .shouldHaveHref("/dashboard")
- *     .clickAndWaitForUrl(/\/dashboard$/);
+ * @example
+ * // Direct construction
+ * const profileLink = new LinkBase(page.getByRole("link", { name: "Profile" }));
+ * await profileLink.clickAndWaitForUrl("/profile");
  */
 export class LinkBase {
-  /** Underlying Playwright Locator for this link. */
+  /** Underlying Playwright Locator that targets this link element. */
   readonly locator: Locator;
 
   // ───────────────────────────────────────────────────────────────
-  // Constructors (overloads)
+  // Constructors
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and a selector string (CSS/xpath/etc).
+   * Creates a LinkBase from a Page and a selector string.
+   *
+   * @param page - Playwright Page instance
+   * @param selector - CSS, XPath, or other selector string
    *
    * @example
-   *   const link = new LinkBase(page, 'a[href="/dashboard"]');
+   * const link = new LinkBase(page, 'a[href="/dashboard"]');
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator (e.g., page.getByRole()).
+   * Creates a LinkBase directly from an existing Locator (preferred pattern).
+   *
+   * @param locator - Pre-resolved Playwright Locator
    *
    * @example
-   *   const link = new LinkBase(page.getByRole("link", { name: "Dashboard" }));
+   * const link = new LinkBase(page.getByRole("link", { name: "Sign in" }));
    */
   constructor(locator: Locator);
 
   constructor(pageOrLocator: Page | Locator, selector?: string) {
     if (selector !== undefined) {
-      // Usage: new LinkBase(page, 'a[href="/dashboard"]')
       this.locator = (pageOrLocator as Page).locator(selector);
     } else {
-      // Usage: new LinkBase(page.getByRole("link", { name: "Dashboard" }))
       this.locator = pageOrLocator as Locator;
     }
   }
 
   /**
-   * Expose the underlying Locator for advanced operations.
+   * Returns the underlying Playwright Locator for advanced or custom operations.
+   *
+   * @returns The raw Locator instance
+   *
+   * @example
+   * await link.asLocator().hover({ timeout: 2000 });
    */
   asLocator(): Locator {
     return this.locator;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Navigation & click actions
+  // Navigation & Click Actions
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Click the link and wait for the next network response after the click.
+   * Clicks the link and waits for a network response to complete.
+   * Useful for SPA route changes or API-triggered navigations.
    *
-   * Generic helper for flows where the link click triggers
-   * an important network call (navigation, SPA route change, etc.).
+   * @param options - Optional configuration
+   * @param options.timeout - Maximum time to wait for response (ms)
+   * @returns This instance (for chaining)
    */
   async clickAndNavigate(options?: { timeout?: number }): Promise<this> {
+    const page = this.locator.page();
     const [response] = await Promise.all([
-      this.locator
-        .page()
-        .waitForEvent("response", { timeout: options?.timeout ?? 30_000 }),
+      page.waitForEvent("response", { timeout: options?.timeout ?? 30_000 }),
       this.locator.click(),
     ]);
     await response?.finished();
@@ -91,8 +108,11 @@ export class LinkBase {
   }
 
   /**
-   * Click the link without waiting for navigation.
-   * Use this for in-page actions (e.g., modals, accordions).
+   * Performs a simple click on the link without waiting for navigation.
+   * Suitable for in-page actions (modals, accordions, tabs).
+   *
+   * @param options - Click options (force, position, modifiers, timeout, etc.)
+   * @returns This instance (for chaining)
    */
   async click(options?: Parameters<Locator["click"]>[0]): Promise<this> {
     await this.locator.click(options);
@@ -100,9 +120,14 @@ export class LinkBase {
   }
 
   /**
-   * Click and wait for a new page (e.g., target="_blank").
+   * Clicks the link and waits for a new browser page/tab to open.
+   * Commonly used with `target="_blank"` links.
    *
-   * @returns The new Page object.
+   * @returns The newly opened Page instance
+   *
+   * @example
+   * const newPage = await externalLink.clickAndWaitForNewPage();
+   * await newPage.waitForLoadState("networkidle");
    */
   async clickAndWaitForNewPage(): Promise<Page> {
     const [newPage] = await Promise.all([
@@ -114,16 +139,19 @@ export class LinkBase {
   }
 
   /**
-   * Click the link and wait for the URL on the *current* page
-   * to match an expected string or RegExp.
+   * Clicks the link and waits for the current page URL to match the expected pattern.
    *
-   * This is typically how juniors will test navigation:
+   * @param expected - Expected URL string or RegExp
+   * @param options - Optional configuration
+   * @param options.timeout - Maximum time to wait (ms)
+   * @returns This instance (for chaining)
    *
-   *   await dashboardLink.clickAndWaitForUrl(/\/dashboard$/);
+   * @example
+   * await dashboardLink.clickAndWaitForUrl("/dashboard");
    */
   async clickAndWaitForUrl(
     expected: string | RegExp,
-    options?: { timeout?: number }
+    options?: { timeout?: number },
   ): Promise<this> {
     const page = this.locator.page();
     await Promise.all([
@@ -134,182 +162,312 @@ export class LinkBase {
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Getters (async)
+  // Getters
   // ───────────────────────────────────────────────────────────────
 
-  /** Get the `href` attribute (empty string if missing). */
+  /**
+   * Retrieves the `href` attribute value.
+   *
+   * @returns The href string or empty string if not present
+   */
   async getHref(): Promise<string> {
     return (await this.locator.getAttribute("href")) ?? "";
   }
 
-  /** Get the visible text content. */
+  /**
+   * Gets the visible text content of the link (trimmed).
+   *
+   * @returns Trimmed text or empty string if none
+   */
   async getText(): Promise<string> {
-    return (await this.locator.textContent({ timeout: 5_000 }))?.trim() ?? "";
+    return (await this.locator.textContent())?.trim() ?? "";
   }
 
-  /** Get the `target` attribute. */
+  /**
+   * Retrieves the `target` attribute value.
+   *
+   * @returns Target value (e.g. "_blank") or null
+   */
   async getTarget(): Promise<string | null> {
     return await this.locator.getAttribute("target");
   }
 
-  /** Get the `rel` attribute (e.g., "noopener noreferrer nofollow"). */
+  /**
+   * Retrieves the `rel` attribute value.
+   *
+   * @returns Rel value (e.g. "noopener noreferrer") or null
+   */
   async getRel(): Promise<string | null> {
     return await this.locator.getAttribute("rel");
   }
 
-  /** Get a specific attribute value. */
+  /**
+   * Retrieves the `download` attribute value.
+   *
+   * @returns Download filename or null if not present
+   */
+  async getDownload(): Promise<string | null> {
+    return await this.locator.getAttribute("download");
+  }
+
+  /**
+   * Gets the value of any attribute by name.
+   *
+   * @param name - Attribute name (e.g. "data-testid", "aria-label")
+   * @returns Attribute value or null if not present
+   */
   async getAttribute(name: string): Promise<string | null> {
     return await this.locator.getAttribute(name);
   }
 
-  /** Check if link is disabled (framework-dependent: aria/role/disabled). */
+  /**
+   * Checks if the link is currently disabled.
+   *
+   * @returns `true` if disabled, `false` otherwise
+   */
   async isDisabled(): Promise<boolean> {
     return await this.locator.isDisabled();
   }
 
-  /** Check if link is visible. */
+  /**
+   * Checks if the link is currently visible.
+   *
+   * @returns `true` if visible, `false` otherwise
+   */
   async isVisible(): Promise<boolean> {
     return await this.locator.isVisible();
   }
 
+  /**
+   * Gets the bounding box (position and size) of the link element.
+   *
+   * @returns Object with x, y, width, height or null if not attached/visible
+   */
+  async getBoundingBox(): Promise<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null> {
+    return await this.locator.boundingBox();
+  }
+
   // ───────────────────────────────────────────────────────────────
-  // Actions (advanced)
+  // Interactions
   // ───────────────────────────────────────────────────────────────
 
-  /** Hover over the link. */
+  /**
+   * Hovers over the link (useful for revealing tooltips or hover styles).
+   *
+   * @param options - Hover options
+   * @returns This instance (for chaining)
+   */
   async hover(options?: Parameters<Locator["hover"]>[0]): Promise<this> {
     await this.locator.hover(options);
     return this;
   }
 
-  /** Double-click the link. */
-  async dblclick(options?: Parameters<Locator["dblclick"]>[0]): Promise<this> {
-    await this.locator.dblclick(options);
-    return this;
-  }
-
-  /** Right-click the link. */
-  async rightClick(options?: Parameters<Locator["click"]>[0]): Promise<this> {
-    await this.locator.click({ ...options, button: "right" });
-    return this;
-  }
-
-  /** Focus the link. */
+  /**
+   * Focuses the link (useful for keyboard navigation testing).
+   *
+   * @returns This instance (for chaining)
+   */
   async focus(): Promise<this> {
     await this.locator.focus();
     return this;
   }
 
-  /** Remove focus from the link. */
+  /**
+   * Removes focus from the link.
+   *
+   * @returns This instance (for chaining)
+   */
   async blur(): Promise<this> {
     await this.locator.blur();
     return this;
   }
 
-  /** Scroll link into view if needed. */
+  /**
+   * Presses a keyboard key while the link is focused.
+   *
+   * @param key - Key to press (e.g. "Enter", "Space", "ArrowDown")
+   * @param options - Press options
+   * @returns This instance (for chaining)
+   *
+   * @example
+   * await link.focus().pressKey("Enter");
+   */
+  async pressKey(
+    key: string,
+    options?: Parameters<Locator["press"]>[1],
+  ): Promise<this> {
+    await this.locator.press(key, options);
+    return this;
+  }
+
+  /**
+   * Scrolls the link into view if it is not already visible.
+   *
+   * @returns This instance (for chaining)
+   */
   async scrollIntoView(): Promise<this> {
     await this.locator.scrollIntoViewIfNeeded();
     return this;
   }
 
   /**
-   * Take a screenshot of just the link.
+   * Takes a screenshot of the link element only.
    *
-   * @param path Optional path; if provided, writes screenshot to disk.
-   * @returns The screenshot Buffer.
+   * @param path - Optional path to save the screenshot to disk
+   * @returns Buffer containing the screenshot
    */
   async screenshot(path?: string): Promise<Buffer> {
     return await this.locator.screenshot({ path });
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Assertions (async – wrap Playwright's auto-retrying expect)
+  // Assertions
   // ───────────────────────────────────────────────────────────────
 
-  /** Assert link has exact text. */
+  /**
+   * Asserts the link has the expected exact text content.
+   *
+   * @param expected - Expected text or RegExp
+   * @returns This instance (for chaining)
+   */
   async shouldHaveText(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveText(expected);
     return this;
   }
 
-  /** Assert link contains text. */
+  /**
+   * Asserts the link contains the expected text substring or pattern.
+   *
+   * @param expected - Substring or RegExp
+   * @returns This instance (for chaining)
+   */
   async shouldContainText(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toContainText(expected);
     return this;
   }
 
-  /** Assert link has exact href. */
+  /**
+   * Asserts the link's `href` attribute matches the expected value or pattern.
+   *
+   * @param expected - Exact href or RegExp
+   * @returns This instance (for chaining)
+   */
   async shouldHaveHref(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveAttribute("href", expected);
     return this;
   }
 
-  /** Assert link has specific rel attribute. */
+  /**
+   * Asserts the link's `href` contains the expected substring or pattern.
+   *
+   * @param expected - Partial string or RegExp
+   * @returns This instance (for chaining)
+   */
+  async shouldHavePartialHref(expected: string | RegExp): Promise<this> {
+    await expect(this.locator).toHaveAttribute("href", expected);
+    return this;
+  }
+
+  /**
+   * Asserts the link has the expected `rel` attribute value.
+   *
+   * @param expected - Expected rel string or RegExp
+   * @returns This instance (for chaining)
+   */
   async shouldHaveRel(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveAttribute("rel", expected);
     return this;
   }
 
-  /** Assert link has target="_blank". */
+  /**
+   * Asserts the link opens in a new tab (`target="_blank"`).
+   *
+   * @returns This instance (for chaining)
+   */
   async shouldOpenInNewTab(): Promise<this> {
     await expect(this.locator).toHaveAttribute("target", "_blank");
     return this;
   }
 
-  /** Assert link does *not* have target="_blank" (opens in same tab). */
+  /**
+   * Asserts the link opens in the same tab (no `target="_blank"`).
+   *
+   * @returns This instance (for chaining)
+   */
   async shouldOpenInSameTab(): Promise<this> {
     await expect(this.locator).not.toHaveAttribute("target", "_blank");
     return this;
   }
 
-  /** Assert link has rel containing "nofollow". */
+  /**
+   * Asserts the link has `rel` containing "nofollow".
+   *
+   * @returns This instance (for chaining)
+   */
   async shouldBeNoFollow(): Promise<this> {
     await expect(this.locator).toHaveAttribute("rel", /nofollow/);
     return this;
   }
 
-  /** Assert link is visible. */
+  /**
+   * Asserts the link has a `download` attribute (optionally with specific filename).
+   *
+   * @param filename - Optional expected filename or RegExp
+   * @returns This instance (for chaining)
+   */
+  async shouldHaveDownloadAttribute(filename?: string | RegExp): Promise<this> {
+    if (filename) {
+      await expect(this.locator).toHaveAttribute("download", filename);
+    } else {
+      await expect(this.locator).toHaveAttribute("download");
+    }
+    return this;
+  }
+
+  /**
+   * Asserts the link has `rel` containing "noreferrer".
+   *
+   * @returns This instance (for chaining)
+   */
+  async shouldHaveNoReferrer(): Promise<this> {
+    await expect(this.locator).toHaveAttribute("rel", /noreferrer/);
+    return this;
+  }
+
   async shouldBeVisible(): Promise<this> {
     await expect(this.locator).toBeVisible();
     return this;
   }
 
-  /** Assert link is hidden. */
   async shouldBeHidden(): Promise<this> {
     await expect(this.locator).toBeHidden();
     return this;
   }
 
-  /** Assert link is not visible (alias for hidden). */
   async shouldNotBeVisible(): Promise<this> {
-    await expect(this.locator).toBeHidden();
-    return this;
+    return this.shouldBeHidden();
   }
 
-  /** Assert link is enabled. */
   async shouldBeEnabled(): Promise<this> {
     await expect(this.locator).toBeEnabled();
     return this;
   }
 
-  /** Assert link is disabled. */
   async shouldBeDisabled(): Promise<this> {
     await expect(this.locator).toBeDisabled();
     return this;
   }
 
-  /** Assert link is focused. */
   async shouldBeFocused(): Promise<this> {
     await expect(this.locator).toBeFocused();
     return this;
   }
 
-  /**
-   * Assert link intersects the viewport.
-   *
-   * @param options.ratio   0–1: how much of the element must be visible.
-   * @param options.timeout Assertion timeout override (optional).
-   */
   async shouldBeInViewport(options?: {
     ratio?: number;
     timeout?: number;
@@ -318,42 +476,36 @@ export class LinkBase {
     return this;
   }
 
-  /** Assert link has specific class. */
   async shouldHaveClass(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveClass(expected);
     return this;
   }
 
-  /** Assert link has aria-label. */
   async shouldHaveAriaLabel(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveAttribute("aria-label", expected);
     return this;
   }
 
-  /** Assert link has a specific accessible name. */
   async shouldHaveAccessibleName(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveAccessibleName(expected);
     return this;
   }
 
-  /** Assert link has a specific accessible description. */
   async shouldHaveAccessibleDescription(
-    expected: string | RegExp
+    expected: string | RegExp,
   ): Promise<this> {
     await expect(this.locator).toHaveAccessibleDescription(expected);
     return this;
   }
 
-  /** Assert link has a specific attribute and value. */
   async shouldHaveAttribute(
     name: string,
-    value: string | RegExp
+    value: string | RegExp,
   ): Promise<this> {
     await expect(this.locator).toHaveAttribute(name, value);
     return this;
   }
 
-  /** Assert link does *not* have a given attribute. */
   async shouldNotHaveAttribute(name: string): Promise<this> {
     await expect(this.locator).not.toHaveAttribute(name, /.*/);
     return this;
@@ -363,28 +515,78 @@ export class LinkBase {
   // Waiters
   // ───────────────────────────────────────────────────────────────
 
-  /** Wait for link to be visible and enabled. */
+  /**
+   * Waits until the link is visible and enabled (ready for interaction).
+   *
+   * @param timeout - Maximum wait time in milliseconds
+   * @returns This instance (for chaining)
+   */
   async waitUntilReady(timeout = 10_000): Promise<this> {
     await this.locator.waitFor({ state: "visible", timeout });
     await expect(this.locator).toBeEnabled({ timeout });
     return this;
   }
 
-  /** Wait for href to match/contain a value. */
+  /**
+   * Waits until the `href` attribute matches the expected value or pattern.
+   *
+   * @param expected - Expected href string or RegExp
+   * @param timeout - Maximum wait time in milliseconds
+   * @returns This instance (for chaining)
+   */
   async waitForHref(
     expected: string | RegExp,
-    timeout = 10_000
+    timeout = 10_000,
   ): Promise<this> {
     await expect(this.locator).toHaveAttribute("href", expected, { timeout });
     return this;
   }
 
-  /** Wait for text to match. */
+  /**
+   * Waits until the link's text matches the expected value or pattern.
+   *
+   * @param expected - Expected text string or RegExp
+   * @param timeout - Maximum wait time in milliseconds
+   * @returns This instance (for chaining)
+   */
   async waitForText(
     expected: string | RegExp,
-    timeout = 10_000
+    timeout = 10_000,
   ): Promise<this> {
     await expect(this.locator).toHaveText(expected, { timeout });
+    return this;
+  }
+
+  /**
+   * Waits until any specified attribute matches the expected value or pattern.
+   *
+   * @param name - Attribute name (e.g. "href", "rel", "target")
+   * @param expected - Expected value or RegExp
+   * @param timeout - Maximum wait time in milliseconds
+   * @returns This instance (for chaining)
+   */
+  async waitForAttribute(
+    name: string,
+    expected: string | RegExp,
+    timeout = 10_000,
+  ): Promise<this> {
+    await expect(this.locator).toHaveAttribute(name, expected, { timeout });
+    return this;
+  }
+
+  /**
+   * Hovers over the link and waits for a tooltip/popover to become visible.
+   *
+   * @param tooltipLocator - Locator for the expected tooltip/popover element
+   * @param timeout - Maximum wait time in milliseconds
+   * @returns This instance (for chaining)
+   */
+  async hoverAndWaitForTooltip(
+    tooltipLocator: Locator,
+    timeout = 10_000,
+  ): Promise<this> {
+    await this.hover();
+    await tooltipLocator.waitFor({ state: "visible", timeout });
     return this;
   }
 }

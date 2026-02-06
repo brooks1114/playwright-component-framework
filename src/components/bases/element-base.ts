@@ -4,53 +4,67 @@ import { Page, Locator, expect } from "@playwright/test";
 /**
  * ElementBase
  * -----------
- * Generic, chainable base class for non-interactive DOM elements:
+ * The foundational, chainable base class for **non-interactive** DOM elements in a React application.
  *
- *  - Headings
- *  - Labels
- *  - Static text blocks
- *  - Card / section containers
- *  - Icons, tags, badges, etc.
+ * Intended for:
+ * - Headings (`<h1>`, `<h2>`, etc.)
+ * - Labels, static text blocks, paragraphs
+ * - Cards, sections, containers, panels
+ * - Icons, badges, tags, chips, avatars
+ * - Any read-only content that does **not** require input or click actions
  *
- * It wraps a Playwright Locator and exposes common getters + assertions,
- * so component/page objects rarely need to talk to `expect` directly.
+ * Wraps a Playwright `Locator` and provides:
+ * - Getters for text, HTML, attributes, visibility, classes
+ * - Fluent assertions using Playwright's auto-waiting `expect`
+ * - Waiters for visibility and content changes
+ * - Utilities (scroll, screenshot)
  *
- * Construction:
- *  - new ElementBase(page, "#matter-details");
- *  - new ElementBase(page.getByRole("heading", { name: "Case name" }));
+ * All interactive elements (buttons, inputs, checkboxes, etc.) should extend more specific bases
+ * like `ButtonBase`, `InputBase`, `CheckboxBase`, etc.
  *
- * Example:
- *   const heading = new ElementBase(
- *     page.getByRole("heading", { name: "Matter details" })
- *   );
+ * @example
+ * // Recommended: via ComponentFactory
+ * const $ = new ComponentFactory(page);
+ * const title = $.headingByRole("Welcome to Dashboard");
  *
- *   await heading
- *     .shouldBeVisible()
- *     .shouldHaveText("Matter details");
+ * await title
+ *   .shouldBeVisible()
+ *   .shouldHaveText("Welcome to Dashboard")
+ *   .shouldHaveClass("text-2xl font-bold");
+ *
+ * @example
+ * // Direct construction
+ * const cardTitle = new ElementBase(
+ *   page.getByRole("heading", { name: "Patient Summary" })
+ * );
+ * await cardTitle.scrollIntoView().shouldBeInViewport();
  */
 export class ElementBase {
-  /** Underlying Playwright Locator. All operations are routed through this. */
+  /** Underlying Playwright Locator — all operations are performed through this. */
   readonly locator: Locator;
 
   // ───────────────────────────────────────────────────────────────
-  // Constructors (overloads)
+  // Constructors
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and a selector string (CSS/xpath/etc).
+   * Creates an ElementBase from a Page and selector string.
+   *
+   * @param page - Playwright Page instance
+   * @param selector - CSS, XPath, or text selector
    *
    * @example
-   *   const element = new ElementBase(page, "#matter-details");
+   * const section = new ElementBase(page, "section[data-testid='summary']");
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator.
+   * Creates an ElementBase directly from a pre-resolved Locator (preferred).
+   *
+   * @param locator - Locator targeting the element
    *
    * @example
-   *   const element = new ElementBase(
-   *     page.getByRole("heading", { name: "Case name" })
-   *   );
+   * const badge = new ElementBase(page.getByText("New", { exact: true }));
    */
   constructor(locator: Locator);
 
@@ -63,46 +77,73 @@ export class ElementBase {
   }
 
   /**
-   * Expose the underlying Locator for advanced operations.
+   * Returns the underlying Playwright Locator for advanced or custom operations.
    *
-   * Use this if you need something that ElementBase does not wrap yet:
+   * @returns Raw Locator instance
    *
-   *   await element.asLocator().nth(0).click();
+   * @example
+   * await element.asLocator().hover(); // access methods not wrapped by ElementBase
    */
   asLocator(): Locator {
     return this.locator;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // GETTERS
+  // Getters
   // ───────────────────────────────────────────────────────────────
 
-  /** Get visible text content (trimmed, empty string if none). */
+  /**
+   * Gets the visible text content of the element (trimmed).
+   *
+   * @param timeout - Optional timeout override (ms)
+   * @returns Trimmed text or empty string if none
+   */
   async getText(timeout = 5_000): Promise<string> {
     return (await this.locator.textContent({ timeout }))?.trim() ?? "";
   }
 
-  /** Get innerHTML for this element. */
+  /**
+   * Gets the inner HTML of the element.
+   *
+   * @returns Inner HTML string (empty if none)
+   */
   async getHtml(): Promise<string> {
     return (await this.locator.innerHTML()) ?? "";
   }
 
-  /** Get a specific attribute value. */
+  /**
+   * Gets the value of a specified attribute.
+   *
+   * @param name - Attribute name (e.g. "data-testid", "aria-label")
+   * @returns Attribute value or `null` if not present
+   */
   async getAttribute(name: string): Promise<string | null> {
     return await this.locator.getAttribute(name);
   }
 
-  /** Get the element id attribute (if present). */
+  /**
+   * Gets the `id` attribute value.
+   *
+   * @returns ID string or `null`
+   */
   async getId(): Promise<string | null> {
     return await this.locator.getAttribute("id");
   }
 
-  /** Get the element class attribute as a raw string (or null). */
+  /**
+   * Gets the `class` attribute as a raw string.
+   *
+   * @returns Class string or `null`
+   */
   async getClassName(): Promise<string | null> {
     return await this.locator.getAttribute("class");
   }
 
-  /** Get the element class list as an array of class names. */
+  /**
+   * Gets the list of classes applied to the element.
+   *
+   * @returns Array of class names (empty if none)
+   */
   async getClassList(): Promise<string[]> {
     const classAttr = (await this.locator.getAttribute("class")) ?? "";
     return classAttr
@@ -111,106 +152,165 @@ export class ElementBase {
       .filter((c) => c.length > 0);
   }
 
-  /** Check if element is visible. */
+  /**
+   * Checks whether the element is currently visible.
+   *
+   * @returns `true` if visible, `false` otherwise
+   */
   async isVisible(): Promise<boolean> {
     return await this.locator.isVisible();
   }
 
-  /** Check if element is hidden. */
+  /**
+   * Checks whether the element is hidden.
+   *
+   * @returns `true` if hidden, `false` otherwise
+   */
   async isHidden(): Promise<boolean> {
     return await this.locator.isHidden();
   }
 
-  /** Check if element is enabled (for ARIA/role-based controls). */
+  /**
+   * Checks if the element is enabled (useful for ARIA-controlled elements).
+   *
+   * @returns `true` if enabled, `false` if disabled
+   */
   async isEnabled(): Promise<boolean> {
     return await this.locator.isEnabled();
   }
 
-  /** Check if element is disabled. */
+  /**
+   * Checks if the element is disabled.
+   *
+   * @returns `true` if disabled, `false` otherwise
+   */
   async isDisabled(): Promise<boolean> {
     return await this.locator.isDisabled();
   }
 
   // ───────────────────────────────────────────────────────────────
-  // ASSERTIONS
+  // Fluent Assertions (auto-retrying via expect)
   // ───────────────────────────────────────────────────────────────
 
-  /** Assert element is visible. */
+  /**
+   * Asserts the element is visible.
+   *
+   * @returns This instance (for chaining)
+   */
   async shouldBeVisible(): Promise<this> {
     await expect(this.locator).toBeVisible();
     return this;
   }
 
-  /** Assert element is hidden. */
+  /**
+   * Asserts the element is hidden.
+   *
+   * @returns This instance (for chaining)
+   */
   async shouldBeHidden(): Promise<this> {
     await expect(this.locator).toBeHidden();
     return this;
   }
 
-  /** Alias: assert element is NOT visible. */
+  /**
+   * Alias for `shouldBeHidden()`.
+   */
   async shouldNotBeVisible(): Promise<this> {
-    await expect(this.locator).toBeHidden();
-    return this;
+    return this.shouldBeHidden();
   }
 
-  /** Assert element has exact text (string or RegExp). */
+  /**
+   * Asserts the element has exact text content.
+   *
+   * @param expected - Exact string or RegExp pattern
+   */
   async shouldHaveText(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveText(expected);
     return this;
   }
 
-  /** Assert element contains text (substring or pattern). */
+  /**
+   * Asserts the element contains the expected text (substring or pattern).
+   *
+   * @param expected - Substring or RegExp
+   */
   async shouldContainText(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toContainText(expected);
     return this;
   }
 
-  /** Assert element has a specific class or matches a pattern. */
+  /**
+   * Asserts the element has a specific class or class pattern.
+   *
+   * @param expected - Exact class name or RegExp
+   */
   async shouldHaveClass(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveClass(expected);
     return this;
   }
 
-  /** Assert element has a specific id. */
+  /**
+   * Asserts the element has a specific `id` attribute.
+   *
+   * @param expected - Exact ID or RegExp
+   */
   async shouldHaveId(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveAttribute("id", expected);
     return this;
   }
 
-  /** Assert element has a specific attribute and value. */
+  /**
+   * Asserts the element has a specific attribute with expected value.
+   *
+   * @param name - Attribute name
+   * @param value - Expected value or RegExp
+   */
   async shouldHaveAttribute(
     name: string,
-    value: string | RegExp
+    value: string | RegExp,
   ): Promise<this> {
     await expect(this.locator).toHaveAttribute(name, value);
     return this;
   }
 
-  /** Assert element does *not* have the given attribute. */
+  /**
+   * Asserts the element does **not** have the specified attribute.
+   *
+   * @param name - Attribute name that should be absent
+   */
   async shouldNotHaveAttribute(name: string): Promise<this> {
     await expect(this.locator).not.toHaveAttribute(name, /.*/);
     return this;
   }
 
-  /** Assert element has a specific accessible name. */
+  /**
+   * Asserts the element has the expected accessible name.
+   *
+   * @param expected - Accessible name or pattern
+   */
   async shouldHaveAccessibleName(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveAccessibleName(expected);
     return this;
   }
 
-  /** Assert element has a specific accessible description. */
+  /**
+   * Asserts the element has the expected accessible description.
+   *
+   * @param expected - Accessible description or pattern
+   */
   async shouldHaveAccessibleDescription(
-    expected: string | RegExp
+    expected: string | RegExp,
   ): Promise<this> {
     await expect(this.locator).toHaveAccessibleDescription(expected);
     return this;
   }
 
   /**
-   * Assert element intersects the viewport.
+   * Asserts the element is at least partially in the viewport.
    *
-   * @param options.ratio  0–1: how much of the element must be visible.
-   * @param options.timeout Assertion timeout override (optional).
+   * @param options - Configuration
+   * @param options.ratio - Minimum visible ratio (0–1, default ~0)
+   * @param options.timeout - Assertion timeout override
    */
   async shouldBeInViewport(options?: {
     ratio?: number;
@@ -221,45 +321,65 @@ export class ElementBase {
   }
 
   // ───────────────────────────────────────────────────────────────
-  // WAITERS
+  // Waiters
   // ───────────────────────────────────────────────────────────────
 
-  /** Wait until element is visible. */
+  /**
+   * Waits until the element becomes visible.
+   *
+   * @param timeout - Max wait time (ms)
+   */
   async waitUntilVisible(timeout = 10_000): Promise<this> {
     await this.locator.waitFor({ state: "visible", timeout });
     return this;
   }
 
-  /** Wait until element is hidden (detached or not visible). */
+  /**
+   * Waits until the element becomes hidden or detached.
+   *
+   * @param timeout - Max wait time (ms)
+   */
   async waitUntilHidden(timeout = 10_000): Promise<this> {
     await this.locator.waitFor({ state: "hidden", timeout });
     return this;
   }
 
-  /** Wait until text matches/contains the expected value. */
+  /**
+   * Waits until the element's text matches or contains the expected value.
+   *
+   * @param expected - Text or RegExp to wait for
+   * @param timeout - Max wait time (ms)
+   */
   async waitForText(
     expected: string | RegExp,
-    timeout = 10_000
+    timeout = 10_000,
   ): Promise<this> {
     await expect(this.locator).toHaveText(expected, { timeout });
     return this;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // UTILITIES
+  // Utilities
   // ───────────────────────────────────────────────────────────────
 
-  /** Scroll element into view if needed. */
+  /**
+   * Scrolls the element into view if not already visible.
+   *
+   * @returns This instance (for chaining)
+   */
   async scrollIntoView(): Promise<this> {
     await this.locator.scrollIntoViewIfNeeded();
     return this;
   }
 
   /**
-   * Take a screenshot of just this element.
+   * Captures a screenshot of this element only.
    *
-   * @param path Optional path to save the screenshot.
-   * @returns The screenshot Buffer.
+   * @param path - Optional file path to save screenshot
+   * @returns Screenshot buffer
+   *
+   * @example
+   * await heading.screenshot("screenshots/heading.png");
    */
   async screenshot(path?: string): Promise<Buffer> {
     return await this.locator.screenshot({ path });

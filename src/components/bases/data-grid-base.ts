@@ -5,54 +5,63 @@ import { TableBase } from "./table-base";
 /**
  * DataGridBase
  * ------------
- * Specialization of TableBase for interactive data grids:
+ * Specialized base class for **interactive data grids** (e.g. Material-UI DataGrid, AG-Grid, custom React tables).
+ * Extends `TableBase` with support for sorting, sort state verification, and row content validation.
  *
- *  - Sortable column headers (aria-sort or visual sort)
- *  - Row-order assertions (ascending/descending)
- *  - Optional "filter-like" expectations (e.g. all rows match a predicate)
+ * Key features:
+ * - Clicking column headers to sort
+ * - Reading `aria-sort` state (if exposed)
+ * - Validating sort order via **cell text content** (works even without ARIA)
+ * - Numeric/string sorting detection
+ * - "Filter result" validation (all rows match a condition)
  *
  * Assumptions:
- *  - Data grid is still structurally a table:
- *      - Headers: <th>, <td>, or [role="columnheader"]
- *      - Rows:    <tr> or [role="row"]
- *      - Cells:   <td>, <th>, or [role="cell"]
- *  - Sort is triggered by clicking column headers.
- *  - Sort state is either:
- *      - Exposed via aria-sort on the header cell ("ascending"/"descending"/"none"), OR
- *      - Only reflected in the row order (we can still validate order).
+ * - Grid uses `<table>`, `role="grid"`, or similar structure
+ * - Headers are `<th>`, `<td>`, or `[role="columnheader"]`
+ * - Sorting is triggered by clicking headers
+ * - Sort state may be in `aria-sort` **or** only visible in row order
  *
- * Common usage:
- *   const grid = new DataGridBase(
- *     page.getByRole("grid", { name: "Search results" })
- *   );
+ * @extends TableBase
  *
- *   await grid.sortByColumn("Case", "asc");
- *   await grid.shouldBeSortedBy("Case", { direction: "asc" });
+ * @example
+ * // Using ComponentFactory (recommended)
+ * const $ = new ComponentFactory(page);
+ * const resultsGrid = $.dataGridByRole("Search results");
  *
- *   await grid.sortByColumn(/Status/, "desc");
- *   await grid.shouldHaveSortState("Status", "descending");
+ * await resultsGrid
+ *   .sortByColumn("Date", "desc")
+ *   .shouldBeSortedBy("Date", { direction: "desc", numeric: false });
+ *
+ * @example
+ * // Direct locator construction
+ * const grid = new DataGridBase(
+ *   page.getByRole("grid", { name: "Patient Records" })
+ * );
+ * await grid.sortByColumn(/Status/, "asc");
  */
 export class DataGridBase extends TableBase {
   // ───────────────────────────────────────────────────────────────
-  // Constructors (overloads)
+  // Constructors
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and a selector string that points
-   * at the data-grid container (table, grid, etc.).
+   * Creates a DataGridBase from a Page and selector string pointing to the grid container.
+   *
+   * @param page - Playwright Page instance
+   * @param selector - CSS/XPath selector for the grid (e.g. "table#results", "[role='grid']")
    *
    * @example
-   *   const grid = new DataGridBase(page, "table#results");
+   * const grid = new DataGridBase(page, "div[data-testid='user-grid'] > table");
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator.
+   * Creates a DataGridBase directly from a pre-resolved Locator.
+   *
+   * @param locator - Locator targeting the grid container
    *
    * @example
-   *   const grid = new DataGridBase(
-   *     page.getByRole("grid", { name: "Search results" })
-   *   );
+   * const grid = new DataGridBase(page.getByRole("grid", { name: /Invoices/ }));
    */
   constructor(locator: Locator);
 
@@ -65,84 +74,90 @@ export class DataGridBase extends TableBase {
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Header locators (override-friendly helpers)
+  // Header Locators (override-friendly)
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Locator for header cells.
+   * Returns the locator for all header cells in the grid.
+   * Can be overridden in subclasses for non-standard grid implementations.
    *
-   * Overriding this in a subclass is an easy way to adapt
-   * to different grid implementations if needed.
+   * @returns Locator targeting header cells
    */
   protected get headerCellsLocator(): Locator {
-    // Mirrors TableBase.headerCells logic
     return this.asLocator().locator(
       "thead tr:first-of-type th, " +
         "thead tr:first-of-type td, " +
-        "[role='columnheader']"
+        "[role='columnheader']",
     );
   }
 
   /**
-   * Get header cell Locator by resolved column index.
+   * Gets the locator for a specific header cell by its 0-based index.
+   *
+   * @param index - Column index (0-based)
+   * @returns Locator for the header cell
    */
   protected getHeaderCellByIndex(index: number): Locator {
     return this.headerCellsLocator.nth(index);
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Sort state helpers
+  // Sort Interaction & State
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Get aria-sort value for a given column:
-   *  - "ascending"
-   *  - "descending"
-   *  - "none" | null (unsorted / not exposed)
+   * Retrieves the current `aria-sort` value for the specified column.
+   *
+   * @param column - Column identifier: index (number), header text (string), or RegExp
+   * @returns `"ascending"`, `"descending"`, `"none"`, or `null` if not present
+   *
+   * @remarks Returns `null` if ARIA sort is not used by the grid.
    */
   async getSortStateForColumn(
-    column: number | string | RegExp
+    column: number | string | RegExp,
   ): Promise<string | null> {
-    const colIndex = await (this as any)["resolveColumnIndex"](column); // reuse TableBase internal helper
+    // Leverage TableBase's internal resolveColumnIndex (assumed protected method)
+    const colIndex = await (this as any).resolveColumnIndex(column);
     const headerCell = this.getHeaderCellByIndex(colIndex);
-    const ariaSort = await headerCell.getAttribute("aria-sort");
-    return ariaSort; // may be "ascending", "descending", "none", or null
+    return await headerCell.getAttribute("aria-sort");
   }
 
   /**
-   * Click a header cell for the given column.
+   * Clicks the header cell of the specified column to trigger sorting.
+   * Protected method — used internally by `sortByColumn`.
    *
-   * By default this performs a single click. Your grid implementation
-   * usually cycles states like: none → asc → desc → none ...
+   * @param column - Column identifier
+   * @param options - Click options (force, timeout, etc.)
    */
   protected async clickHeader(
     column: number | string | RegExp,
-    options?: Parameters<Locator["click"]>[0]
+    options?: Parameters<Locator["click"]>[0],
   ): Promise<void> {
-    const colIndex = await (this as any)["resolveColumnIndex"](column);
+    const colIndex = await (this as any).resolveColumnIndex(column);
     await this.getHeaderCellByIndex(colIndex).click(options);
   }
 
   /**
-   * Ensure the grid is sorted in the desired direction for the given column.
+   * Clicks the column header (up to 3 times) until the desired sort direction is reached.
    *
-   * Strategy:
-   *  - If aria-sort is present, we click headers until aria-sort matches
-   *    the desired direction (with a max number of attempts).
-   *  - If aria-sort is missing, we still perform up to 3 header clicks and
-   *    rely on external assertions (e.g. shouldBeSortedBy) to validate order.
+   * @param column - Column to sort by (index, exact text, or RegExp)
+   * @param direction - Target sort direction
+   * @param options - Click options
+   * @returns This instance (for chaining)
    *
-   * @param direction "asc" or "desc"
+   * @remarks
+   * - If `aria-sort` is present, stops when it matches the target.
+   * - If no `aria-sort`, performs up to 3 clicks and relies on `shouldBeSortedBy` for validation.
+   * - Many grids cycle: none → asc → desc → none
    */
   async sortByColumn(
     column: number | string | RegExp,
     direction: "asc" | "desc",
-    options?: Parameters<Locator["click"]>[0]
+    options?: Parameters<Locator["click"]>[0],
   ): Promise<this> {
     const targetAria = direction === "asc" ? "ascending" : "descending";
-
-    // Try a few times to reach the desired aria-sort state
     const maxAttempts = 3;
+
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const current = await this.getSortStateForColumn(column);
 
@@ -150,55 +165,69 @@ export class DataGridBase extends TableBase {
         return this;
       }
 
-      // Click header to cycle sort state
       await this.clickHeader(column, options);
     }
 
-    // After maxAttempts, we just return; caller can still verify order by data
+    // If aria-sort not present or not matching after attempts, return anyway
+    // Caller should follow with shouldBeSortedBy() for data-level check
     return this;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Sorting assertions (data-based + aria-based)
+  // Assertions – Sort State & Order
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Assert the grid exposes a particular aria-sort state for the given column.
+   * Asserts that the column header has the expected `aria-sort` value.
    *
-   * @param expected "ascending" | "descending" | "none" | null
+   * @param column - Column identifier
+   * @param expected - Expected aria-sort value ("ascending" | "descending" | "none" | null)
+   * @returns This instance (for chaining)
+   *
+   * @example
+   * await grid.shouldHaveSortState("Name", "ascending");
    */
   async shouldHaveSortState(
     column: number | string | RegExp,
-    expected: "ascending" | "descending" | "none" | null
+    expected: "ascending" | "descending" | "none" | null,
   ): Promise<this> {
     await expect
       .poll(async () => await this.getSortStateForColumn(column), {
+        message: `Expected aria-sort to be "${expected}" for column ${String(column)}`,
         timeout: 10_000,
       })
       .toBe(expected);
+
     return this;
   }
 
   /**
-   * Assert that the grid is sorted by a given column in ascending or descending order.
+   * Asserts that rows are sorted by the given column in the specified direction.
+   * Validates based on **actual cell text content** — works even without `aria-sort`.
    *
-   * Sorting is based on the current **cell text values** for that column.
-   * This is independent of aria-sort and works even if the grid doesn't
-   * expose sort state via ARIA.
+   * @param column - Column to check
+   * @param options - Sort validation options
+   * @param options.direction - "asc" or "desc"
+   * @param options.numeric - Treat values as numbers (default: false)
+   * @param options.normalize - Optional function to clean values before comparison
+   * @returns This instance (for chaining)
    *
-   * Options:
-   *  - numeric: if true, we parse floats and compare numerically.
+   * @example
+   * await grid.shouldBeSortedBy("Price", {
+   *   direction: "desc",
+   *   numeric: true,
+   *   normalize: (v) => v.replace("$", "")
+   * });
    */
   async shouldBeSortedBy(
     column: number | string | RegExp,
     options: {
       direction: "asc" | "desc";
       numeric?: boolean;
-      /** Optional custom normalizer before comparison (e.g., strip currency). */
       normalize?: (raw: string) => string;
-    }
+    },
   ): Promise<this> {
-    const colIndex = await (this as any)["resolveColumnIndex"](column);
+    const colIndex = await (this as any).resolveColumnIndex(column);
     const rowCount = await this.getRowCount();
 
     const rawValues: string[] = [];
@@ -208,11 +237,13 @@ export class DataGridBase extends TableBase {
     }
 
     const normalize = options.normalize ?? ((s: string) => s.trim());
-
     const normalized = rawValues.map(normalize);
 
     if (options.numeric) {
-      const nums = normalized.map((v) => Number(v.replace(/[^0-9.-]/g, "")));
+      const nums = normalized.map((v) => {
+        const cleaned = v.replace(/[^0-9.-]/g, "");
+        return cleaned ? Number(cleaned) : NaN;
+      });
       await this.assertSortedNumeric(nums, options.direction);
     } else {
       await this.assertSortedStrings(normalized, options.direction);
@@ -222,17 +253,23 @@ export class DataGridBase extends TableBase {
   }
 
   /**
-   * Assert that all rows in the grid satisfy a "filter-like" condition
-   * for a given column (e.g., Status = "Open").
+   * Asserts that **every row** in the specified column satisfies the given predicate.
+   * Useful for validating filter results, search results, etc.
    *
-   * This is **not** performing the filter; it just validates the result.
+   * @param column - Column to check
+   * @param predicate - Function that returns true if value is valid
+   * @param message - Optional custom error message
+   * @returns This instance (for chaining)
+   *
+   * @example
+   * await grid.shouldAllRowsMatch("Status", (v) => v === "Active");
    */
   async shouldAllRowsMatch(
     column: number | string | RegExp,
     predicate: (value: string) => boolean,
-    message?: string
+    message?: string,
   ): Promise<this> {
-    const colIndex = await (this as any)["resolveColumnIndex"](column);
+    const colIndex = await (this as any).resolveColumnIndex(column);
     const rowCount = await this.getRowCount();
 
     const failures: { rowIndex: number; value: string }[] = [];
@@ -248,9 +285,10 @@ export class DataGridBase extends TableBase {
       const details = failures
         .map((f) => `row ${f.rowIndex}: "${f.value}"`)
         .join(", ");
+
       throw new Error(
         message ??
-          `DataGridBase.shouldAllRowsMatch: predicate failed for ${failures.length} row(s): ${details}`
+          `shouldAllRowsMatch failed for ${failures.length} rows in column ${String(column)}: ${details}`,
       );
     }
 
@@ -258,29 +296,35 @@ export class DataGridBase extends TableBase {
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Internal helpers for sorting checks
+  // Internal Sorting Assertion Helpers
   // ───────────────────────────────────────────────────────────────
 
+  /**
+   * Internal: Asserts string array is sorted (ascending or descending).
+   * Uses localeCompare with numeric sorting support.
+   */
   private async assertSortedStrings(
     values: string[],
-    direction: "asc" | "desc"
+    direction: "asc" | "desc",
   ): Promise<void> {
     const copy = [...values];
     const sorted = [...values].sort((a, b) =>
-      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
     );
 
     if (direction === "desc") {
       sorted.reverse();
     }
 
-    // Use Jest-style expect so you get a nice diff
     expect(copy).toEqual(sorted);
   }
 
+  /**
+   * Internal: Asserts numeric array is sorted (ascending or descending).
+   */
   private async assertSortedNumeric(
     values: number[],
-    direction: "asc" | "desc"
+    direction: "asc" | "desc",
   ): Promise<void> {
     const copy = [...values];
     const sorted = [...values].sort((a, b) => a - b);

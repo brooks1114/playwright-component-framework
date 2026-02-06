@@ -5,35 +5,38 @@ import { ElementBase } from "./element-base";
 /**
  * TabListBase
  * -----------
- * Semantic base class for tabbed navigation components.
+ * Chainable base class for ARIA-compliant tabbed interfaces (role="tablist").
  *
- * ARIA pattern (recommended):
- *   <div role="tablist" aria-label="Matter tabs">
- *     <button role="tab" aria-selected="true" aria-controls="panel-details" id="tab-details">Details</button>
- *     <button role="tab" aria-selected="false" aria-controls="panel-history" id="tab-history">History</button>
+ * Follows the WAI-ARIA Tab Pattern:
+ *   <div role="tablist" aria-label="Content sections">
+ *     <button role="tab" aria-selected="true" aria-controls="panel-1" id="tab-1">Tab 1</button>
+ *     <button role="tab" aria-selected="false" aria-controls="panel-2" id="tab-2">Tab 2</button>
  *   </div>
+ *   <div id="panel-1" role="tabpanel" aria-labelledby="tab-1">...</div>
+ *   <div id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>...</div>
  *
- *   <div id="panel-details" role="tabpanel" aria-labelledby="tab-details">...</div>
- *   <div id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>...</div>
+ * Responsibilities:
+ *   - Tab discovery, selection, and keyboard navigation
+ *   - Active tab & panel resolution via ARIA attributes
+ *   - Assertions on tab labels, active state, panel content
+ *   - Waiters for tab activation and panel updates
  *
- * This class:
- *  - Extends ElementBase (visibility, text, a11y, screenshots, etc.)
- *  - Adds tab-specific helpers:
- *      - getTabs(), getActiveTab(), getActiveTabLabel()
- *      - selectTabByLabel(), selectTabByIndex()
- *      - panel resolution via aria-controls/aria-labelledby
- *      - assertions & waiters for active tab and panel visibility
+ * Construction:
+ *   - Selector-based: `new TabListBase(page, '[role="tablist"]')`
+ *   - Locator-based: `new TabListBase(page.getByRole("tablist", { name: "Matter tabs" }))`
  *
- * Example:
- *   const tabs = new TabListBase(
- *     page.getByRole("tablist", { name: "Matter tabs" })
- *   );
+ * Recommended usage with ComponentFactory:
+ *   ```ts
+ *   const $ = new ComponentFactory(page);
+ *   const tabs = $.tabListByRoleName("Matter tabs");
  *
  *   await tabs
- *     .shouldHaveTabs(["Details", "History", "Notes"])
+ *     .shouldBeVisible()
+ *     .shouldHaveTabs(["Details", "History", "Attachments"])
  *     .selectTabByLabel("History")
  *     .shouldHaveActiveTab("History")
- *     .shouldActivePanelContain(/no history yet/i);
+ *     .shouldActivePanelContain("No history available");
+ *   ```
  */
 export class TabListBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
@@ -41,20 +44,21 @@ export class TabListBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and selector pointing at the tablist container.
+   * Construct from a Page and a selector string pointing to the tablist container.
    *
+   * @param page - Playwright Page instance
+   * @param selector - CSS/XPath selector for the tablist
    * @example
-   *   const tabs = new TabListBase(page, '[role="tablist"]');
+   *   const tabs = new TabListBase(page, '[role="tablist"][aria-label="Settings"]');
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator (tablist root).
+   * Construct directly from a Locator pointing to the tablist (preferred).
    *
+   * @param locator - Pre-resolved Locator for the tablist
    * @example
-   *   const tabs = new TabListBase(
-   *     page.getByRole("tablist", { name: "Matter tabs" })
-   *   );
+   *   const tabs = new TabListBase(page.getByRole("tablist", { name: "Matter tabs" }));
    */
   constructor(locator: Locator);
 
@@ -67,159 +71,172 @@ export class TabListBase extends ElementBase {
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Core locators
+  // Core Locators
   // ───────────────────────────────────────────────────────────────
 
-  /** Locator for tabs inside this tablist. */
+  /**
+   * Locator for all tab elements within this tablist.
+   */
   protected get tabsLocator(): Locator {
     return this.locator.getByRole("tab");
   }
 
   /**
-   * Panels are often outside the immediate tablist container, but they
-   * should still use role="tabpanel". We resolve panels primarily via
-   * aria-controls on the active tab, but this is a convenient base locator.
+   * Root-level locator used to find tab panels (often outside the tablist).
    */
   protected get pageRoot(): Locator {
-    // Use the root page via the locator.
     return this.locator.page().locator("body");
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Tab discovery / helpers
+  // Tab Discovery
   // ───────────────────────────────────────────────────────────────
 
-  /** Get the count of tabs in this tablist. */
+  /**
+   * Returns the number of tabs in this tablist.
+   *
+   * @returns Number of tabs
+   */
   async getTabCount(): Promise<number> {
     return await this.tabsLocator.count();
   }
 
-  /** Get tab Locator by index (0-based). */
+  /**
+   * Returns all tab labels in order (trimmed).
+   *
+   * @returns Array of tab text labels
+   * @example
+   *   const labels = await tabs.getTabLabels();
+   *   expect(labels).toContain("Overview");
+   */
+  async getTabLabels(): Promise<string[]> {
+    const contents = await this.tabsLocator.allTextContents();
+    return contents.map((t) => t?.trim() ?? "");
+  }
+
+  /**
+   * Locates a tab by its visible/accessible name.
+   *
+   * @param label - Exact or RegExp label to match
+   * @returns Locator for the matching tab
+   */
+  protected locateTabByLabel(label: string | RegExp): Locator {
+    return this.tabsLocator.filter({
+      has: this.locator.page().getByText(label, { exact: true }),
+    });
+  }
+
+  /**
+   * Returns the Locator for the tab at the given 0-based index.
+   *
+   * @param index - 0-based tab position
+   * @returns Locator for the nth tab
+   */
   protected getTabByIndex(index: number): Locator {
     return this.tabsLocator.nth(index);
   }
 
   /**
-   * Get tab Locator by visible/accessible name.
+   * Finds the currently active tab using multiple heuristics.
    *
-   * @example
-   *   const tab = await tabs.locateTabByLabel("Details");
-   */
-  protected locateTabByLabel(label: string | RegExp): Locator {
-    return this.locator.getByRole("tab", { name: label });
-  }
-
-  /** Get all tab labels as trimmed strings. */
-  async getTabLabels(): Promise<string[]> {
-    const texts = await this.tabsLocator.allTextContents();
-    return texts.map((t) => t.trim());
-  }
-
-  /**
-   * Get the currently active tab locator.
+   * Checks in order:
+   * 1. aria-selected="true"
+   * 2. data-state="active" | "selected" | "current"
+   * 3. aria-current="page" | "true"
    *
-   * Detection strategy:
-   *  - aria-selected="true"
-   *  - data-state="active" | "selected"
-   *  - role="tab" with aria-current="page" (less common but supported)
-   *
-   * If multiple match, the first is returned.
-   * If none match, null is returned.
+   * @returns Active tab Locator or null if none found
    */
   async getActiveTab(): Promise<Locator | null> {
-    const tabs = this.tabsLocator;
-    const count = await tabs.count();
-
+    const count = await this.tabsLocator.count();
     for (let i = 0; i < count; i++) {
-      const tab = tabs.nth(i);
+      const tab = this.tabsLocator.nth(i);
 
-      const ariaSelected =
-        (await tab.getAttribute("aria-selected"))?.toLowerCase() ?? "";
-      if (ariaSelected === "true") {
-        return tab;
-      }
+      const ariaSelected = await tab.getAttribute("aria-selected");
+      if (ariaSelected?.toLowerCase() === "true") return tab;
 
-      const dataState =
-        (await tab.getAttribute("data-state"))?.toLowerCase() ?? "";
-      if (dataState === "active" || dataState === "selected") {
+      const dataState = await tab.getAttribute("data-state");
+      if (
+        ["active", "selected", "current"].includes(
+          dataState?.toLowerCase() ?? "",
+        )
+      )
         return tab;
-      }
 
-      const ariaCurrent =
-        (await tab.getAttribute("aria-current"))?.toLowerCase() ?? "";
-      if (ariaCurrent === "page" || ariaCurrent === "true") {
+      const ariaCurrent = await tab.getAttribute("aria-current");
+      if (["page", "true", "step"].includes(ariaCurrent?.toLowerCase() ?? ""))
         return tab;
-      }
     }
-
     return null;
   }
 
-  /** Get the label of the currently active tab, or null if none. */
+  /**
+   * Returns the text label of the currently active tab.
+   *
+   * @returns Active tab label or null
+   */
   async getActiveTabLabel(): Promise<string | null> {
     const active = await this.getActiveTab();
     if (!active) return null;
-
-    const text = await active.textContent();
-    return text?.trim() ?? null;
+    return (await active.textContent())?.trim() ?? null;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Panel resolution
+  // Panel Resolution
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Given a specific tab, resolve its associated panel via ARIA wiring:
+   * Resolves the tabpanel associated with a given tab using ARIA wiring.
    *
-   *  - aria-controls = panel id
-   *  - OR find first [role="tabpanel"][aria-labelledby="<tab.id>"]
+   * Strategies (in order):
+   * 1. aria-controls attribute on tab → #id
+   * 2. [role="tabpanel"][aria-labelledby="{tab.id}"]
+   *
+   * @param tab - Locator of a tab
+   * @returns Associated panel Locator or null
    */
   protected async resolvePanelForTab(tab: Locator): Promise<Locator | null> {
-    const ariaControls = await tab.getAttribute("aria-controls");
-    const tabId = await tab.getAttribute("id");
-
-    // 1) aria-controls → #id
-    if (ariaControls) {
-      const panelById = this.pageRoot.locator(`#${ariaControls}`);
-      if (await panelById.count().then((n) => n > 0)) {
-        return panelById.first();
-      }
+    const controls = await tab.getAttribute("aria-controls");
+    if (controls) {
+      const panel = this.pageRoot.locator(`#${controls}`);
+      if ((await panel.count()) > 0) return panel.first();
     }
 
-    // 2) aria-labelledby on panel referring back to this tab's id
+    const tabId = await tab.getAttribute("id");
     if (tabId) {
-      const panelByLabel = this.pageRoot.locator(
-        `[role="tabpanel"][aria-labelledby="${tabId}"]`
+      const panel = this.pageRoot.locator(
+        `[role="tabpanel"][aria-labelledby="${tabId}"]`,
       );
-      if (await panelByLabel.count().then((n) => n > 0)) {
-        return panelByLabel.first();
-      }
+      if ((await panel.count()) > 0) return panel.first();
     }
 
     return null;
   }
 
   /**
-   * Resolve the currently active tab's panel, if any.
+   * Resolves the currently active tabpanel.
+   *
+   * @returns Active panel Locator or null
    */
   async getActivePanel(): Promise<Locator | null> {
     const activeTab = await this.getActiveTab();
     if (!activeTab) return null;
-    return await this.resolvePanelForTab(activeTab);
+    return this.resolvePanelForTab(activeTab);
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Actions
+  // Selection Actions
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Select a tab by its visible/accessible label.
+   * Selects a tab by clicking its label/name.
    *
-   * Does a simple click, then returns this for chaining.
+   * @param label - Tab label (string or RegExp)
+   * @param options - Click options
+   * @returns this (chainable)
    */
   async selectTabByLabel(
     label: string | RegExp,
-    options?: Parameters<Locator["click"]>[0]
+    options?: Parameters<Locator["click"]>[0],
   ): Promise<this> {
     const tab = this.locateTabByLabel(label);
     await tab.click(options);
@@ -227,36 +244,72 @@ export class TabListBase extends ElementBase {
   }
 
   /**
-   * Select a tab by index (0-based).
+   * Selects a tab by its 0-based index.
    *
-   * Useful when labels are dynamic or repeated.
+   * @param index - Tab position
+   * @param options - Click options
+   * @returns this (chainable)
    */
   async selectTabByIndex(
     index: number,
-    options?: Parameters<Locator["click"]>[0]
+    options?: Parameters<Locator["click"]>[0],
   ): Promise<this> {
     await this.getTabByIndex(index).click(options);
     return this;
   }
 
   /**
-   * Keyboard navigation helper:
-   *  - Focuses the active tab (or first tab if none marked active)
-   *  - Sends the given key (e.g., "ArrowRight", "ArrowLeft", "Home", "End")
+   * Selects the next tab using keyboard navigation (ArrowRight).
+   *
+   * @returns this (chainable)
+   */
+  async selectNextTab(): Promise<this> {
+    return this.navigateWithKey("ArrowRight");
+  }
+
+  /**
+   * Selects the previous tab using keyboard navigation (ArrowLeft).
+   *
+   * @returns this (chainable)
+   */
+  async selectPreviousTab(): Promise<this> {
+    return this.navigateWithKey("ArrowLeft");
+  }
+
+  /**
+   * Selects the first tab (Home key simulation).
+   *
+   * @returns this (chainable)
+   */
+  async selectFirstTab(): Promise<this> {
+    return this.navigateWithKey("Home");
+  }
+
+  /**
+   * Selects the last tab (End key simulation).
+   *
+   * @returns this (chainable)
+   */
+  async selectLastTab(): Promise<this> {
+    return this.navigateWithKey("End");
+  }
+
+  /**
+   * Focuses a tab (or the active/first one) and presses a key.
+   *
+   * @param key - Keyboard key (ArrowRight, ArrowLeft, Home, End, etc.)
+   * @param options - Press options
+   * @returns this (chainable)
    */
   async navigateWithKey(
     key: string,
-    options?: Parameters<Locator["press"]>[1]
+    options?: Parameters<Locator["press"]>[1],
   ): Promise<this> {
     let tab = await this.getActiveTab();
-    if (!tab) {
-      // Fallback: first tab
-      tab = this.getTabByIndex(0);
-    }
+    if (!tab) tab = this.getTabByIndex(0);
 
     await tab.focus();
     await tab.press(key, options);
-
     return this;
   }
 
@@ -264,20 +317,11 @@ export class TabListBase extends ElementBase {
   // Assertions
   // ───────────────────────────────────────────────────────────────
 
-  /** Assert that the tablist is visible (delegates to ElementBase). */
-  async shouldBeVisible(): Promise<this> {
-    await super.shouldBeVisible();
-    return this;
-  }
-
-  /** Assert that the tablist is hidden. */
-  async shouldBeHidden(): Promise<this> {
-    await super.shouldBeHidden();
-    return this;
-  }
-
   /**
-   * Assert that tab labels exactly match in order.
+   * Asserts the tablist has exactly the expected tab labels (in order).
+   *
+   * @param expectedLabels - Ordered array of tab labels
+   * @returns this (chainable)
    */
   async shouldHaveTabs(expectedLabels: readonly string[]): Promise<this> {
     const actual = await this.getTabLabels();
@@ -286,10 +330,10 @@ export class TabListBase extends ElementBase {
   }
 
   /**
-   * Assert that at least the given labels are present (order-insensitive).
+   * Asserts that the tablist contains at least these labels (order-insensitive).
    *
-   * This is useful if the app adds new tabs over time but you still
-   * want to validate the presence of key tabs.
+   * @param expectedLabels - Labels that must be present
+   * @returns this (chainable)
    */
   async shouldContainTabs(expectedLabels: readonly string[]): Promise<this> {
     const actual = await this.getTabLabels();
@@ -300,73 +344,69 @@ export class TabListBase extends ElementBase {
   }
 
   /**
-   * Assert that a particular tab is currently active (by label).
+   * Asserts a specific tab is currently active.
+   *
+   * @param expected - Expected active tab label
+   * @returns this (chainable)
    */
   async shouldHaveActiveTab(expected: string | RegExp): Promise<this> {
-    const label = await this.getActiveTabLabel();
-    if (label === null) {
-      throw new Error(
-        `TabListBase.shouldHaveActiveTab(): no active tab found, expected "${expected.toString()}".`
-      );
+    const actual = await this.getActiveTabLabel();
+    if (actual === null) {
+      throw new Error(`No active tab found. Expected: ${expected.toString()}`);
     }
-
     if (expected instanceof RegExp) {
-      expect(label).toMatch(expected);
+      expect(actual).toMatch(expected);
     } else {
-      expect(label).toBe(expected);
+      expect(actual).toBe(expected);
     }
-
     return this;
   }
 
   /**
-   * Assert that there is some active tab (does not check which one).
+   * Asserts that there is an active tab present.
+   *
+   * @returns this (chainable)
    */
   async shouldHaveAnyActiveTab(): Promise<this> {
     const active = await this.getActiveTab();
-    if (!active) {
-      throw new Error(
-        "TabListBase.shouldHaveAnyActiveTab(): no active tab found (check aria-selected / data-state wiring)."
-      );
-    }
+    expect(active).not.toBeNull();
     return this;
   }
 
   /**
-   * Assert that the active panel (if any) contains text.
+   * Asserts the active panel contains the expected text/pattern.
+   *
+   * @param expected - Text or RegExp to find in active panel
+   * @returns this (chainable)
    */
   async shouldActivePanelContain(expected: string | RegExp): Promise<this> {
     const panel = await this.getActivePanel();
     if (!panel) {
       throw new Error(
-        "TabListBase.shouldActivePanelContain(): could not resolve active panel from active tab. " +
-          "Ensure aria-controls/aria-labelledby wiring follows the ARIA tab pattern."
+        "Cannot resolve active panel. Ensure proper ARIA tab ↔ tabpanel wiring.",
       );
     }
-
     await expect(panel).toContainText(expected);
     return this;
   }
 
   /**
-   * Assert that a specific tab's panel (resolved by label) contains text.
+   * Asserts that the panel for a specific tab (not necessarily active) contains text.
    *
-   * This does NOT require that the tab is currently active.
+   * @param tabLabel - Tab label to locate
+   * @param expected - Expected content in its panel
+   * @returns this (chainable)
    */
   async shouldPanelForTabContain(
     tabLabel: string | RegExp,
-    expected: string | RegExp
+    expected: string | RegExp,
   ): Promise<this> {
     const tab = this.locateTabByLabel(tabLabel);
-
-    // Ensure the tab actually exists in the DOM.
     await expect(tab).toBeVisible();
 
     const panel = await this.resolvePanelForTab(tab);
     if (!panel) {
-      throw new Error(
-        `TabListBase.shouldPanelForTabContain(): could not resolve panel for tab "${tabLabel.toString()}".`
-      );
+      throw new Error(`No panel found for tab: ${tabLabel.toString()}`);
     }
 
     await expect(panel).toContainText(expected);
@@ -378,37 +418,40 @@ export class TabListBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Wait until a specific tab becomes active.
+   * Waits until a specific tab becomes the active one.
    *
-   * Uses Playwright's expect.poll() to repeatedly read the active tab label
-   * until it matches the expected string/RegExp or times out.
+   * @param expected - Label that should become active
+   * @param timeout - Max wait time (ms)
+   * @returns this (chainable)
    */
   async waitUntilTabActive(
     expected: string | RegExp,
-    timeout = 10_000
+    timeout = 10_000,
   ): Promise<this> {
     await expect
       .poll(async () => (await this.getActiveTabLabel()) ?? "", { timeout })
-      .toMatch(expected); // supports both string and RegExp
-
+      .toMatch(expected);
     return this;
   }
 
   /**
-   * Wait until the active panel contains specific text.
+   * Waits until the active panel contains the expected text.
+   *
+   * @param expected - Text or RegExp
+   * @param timeout - Max wait time (ms)
+   * @returns this (chainable)
    */
   async waitUntilActivePanelContains(
     expected: string | RegExp,
-    timeout = 10_000
+    timeout = 10_000,
   ): Promise<this> {
     await expect
       .poll(
         async () => {
           const panel = await this.getActivePanel();
-          if (!panel) return "";
-          return (await panel.textContent()) ?? "";
+          return panel ? ((await panel.textContent())?.trim() ?? "") : "";
         },
-        { timeout }
+        { timeout },
       )
       .toMatch(expected);
     return this;

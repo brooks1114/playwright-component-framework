@@ -5,39 +5,38 @@ import { ElementBase } from "./element-base";
 /**
  * ToggleBase
  * ----------
- * Semantic base class for ON/OFF toggle controls.
+ * Chainable base class for ON/OFF toggle controls (switches, toggle buttons, etc.).
  *
- * Supports common patterns:
- *  - <button role="switch" aria-checked="true|false">
- *  - <div role="switch" aria-checked="true|false">
- *  - <input type="checkbox" class="...-toggle">
- *  - <button aria-pressed="true|false">...</button>
- *  - Components with data-state="on|off" or similar.
+ * Supports common implementation patterns:
+ *   - `<button role="switch" aria-checked="true|false">`
+ *   - `<div role="switch" aria-checked="true|false">`
+ *   - `<input type="checkbox">` (often styled as toggle)
+ *   - `<button aria-pressed="true|false">` (toggle button pattern)
+ *   - Components using `data-state="on"|"off"|"mixed"`
  *
- * This class does NOT require a specific HTML tag; instead it infers
- * state from ARIA + attributes + JS properties using a layered heuristic:
+ * State detection priority (layered heuristic):
+ *   1. `aria-checked` → "true" / "false" / "mixed"
+ *   2. `aria-pressed` → "true" / "false"
+ *   3. `data-state` → "on" / "off" / "mixed" / "indeterminate"
+ *   4. DOM `checked` property (for `<input type="checkbox">`)
+ *   5. Fallback → `"unknown"`
  *
- *   1. aria-checked     → "true"/"false"/"mixed"
- *   2. aria-pressed     → "true"/"false" (toggle button pattern)
- *   3. data-state       → "on"/"off"/"mixed"
- *   4. checked property → true/false for <input type="checkbox">
+ * Construction patterns:
+ *   - Selector-based: `new ToggleBase(page, '[data-testid="theme-toggle"]')`
+ *   - Locator-based: `new ToggleBase(page.getByRole("switch", { name: "Notifications" }))`
  *
- * If none of these are present, the state is "unknown".
+ * Recommended usage with ComponentFactory:
+ *   ```ts
+ *   const $ = new ComponentFactory(page);
+ *   const notificationsToggle = $.toggleByRoleName("Notifications");
  *
- * Construction:
- *   - new ToggleBase(page, '[data-testid="dark-mode-toggle"]');
- *   - new ToggleBase(page.getByRole('switch', { name: 'Dark mode' }));
- *
- * Example:
- *   const toggle = new ToggleBase(
- *     page.getByRole("switch", { name: "Dark mode" })
- *   );
- *
- *   await toggle
+ *   await notificationsToggle
  *     .shouldBeVisible()
  *     .shouldBeOff()
  *     .toggleOn()
- *     .shouldBeOn();
+ *     .shouldBeOn()
+ *     .shouldHaveAccessibleName("Notifications enabled");
+ *   ```
  */
 export class ToggleBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
@@ -45,21 +44,21 @@ export class ToggleBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and a selector string that points
-   * at the toggle control container element.
+   * Construct from a Page and a selector string pointing to the toggle element.
    *
+   * @param page - Playwright Page instance
+   * @param selector - CSS, XPath, or text selector
    * @example
    *   const toggle = new ToggleBase(page, '[data-testid="dark-mode-toggle"]');
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator.
+   * Construct directly from an existing Locator (preferred).
    *
+   * @param locator - Pre-resolved Locator (e.g. getByRole, getByLabel)
    * @example
-   *   const toggle = new ToggleBase(
-   *     page.getByRole("switch", { name: "Dark mode" })
-   *   );
+   *   const toggle = new ToggleBase(page.getByRole("switch", { name: "Dark mode" }));
    */
   constructor(locator: Locator);
 
@@ -72,80 +71,76 @@ export class ToggleBase extends ElementBase {
   }
 
   // ───────────────────────────────────────────────────────────────
-  // State model
+  // State Detection
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Normalized ON/OFF state for toggles.
+   * Returns the normalized toggle state using a layered heuristic.
    *
-   * "mixed" = indeterminate / partially on (rare but supported).
-   * "unknown" = cannot infer from ARIA/attributes/properties.
-   * type ToggleState = "on" | "off" | "mixed" | "unknown";
-   */
-
-  /**
-   * Infer the toggle state from ARIA and attributes.
-   *
-   * Priority:
-   *   1. aria-checked ("true"/"false"/"mixed")
-   *   2. aria-pressed ("true"/"false") for toggle buttons
-   *   3. data-state ("on"/"off"/"mixed")
-   *   4. checked property for <input type="checkbox">
-   *   5. fallback → "unknown"
+   * @returns `"on" | "off" | "mixed" | "unknown"`
    */
   async getState(): Promise<"on" | "off" | "mixed" | "unknown"> {
-    // 1) aria-checked
-    const ariaChecked = (await this.locator.getAttribute("aria-checked")) ?? "";
-    const ac = ariaChecked.toLowerCase();
-    if (ac === "true") return "on";
-    if (ac === "false") return "off";
-    if (ac === "mixed") return "mixed";
+    // 1. aria-checked (highest priority – standard for role="switch")
+    const ariaChecked = (
+      await this.locator.getAttribute("aria-checked")
+    )?.toLowerCase();
+    if (ariaChecked === "true") return "on";
+    if (ariaChecked === "false") return "off";
+    if (ariaChecked === "mixed") return "mixed";
 
-    // 2) aria-pressed (toggle button pattern)
-    const ariaPressed = (await this.locator.getAttribute("aria-pressed")) ?? "";
-    const ap = ariaPressed.toLowerCase();
-    if (ap === "true") return "on";
-    if (ap === "false") return "off";
+    // 2. aria-pressed (toggle button pattern)
+    const ariaPressed = (
+      await this.locator.getAttribute("aria-pressed")
+    )?.toLowerCase();
+    if (ariaPressed === "true") return "on";
+    if (ariaPressed === "false") return "off";
 
-    // 3) data-state
-    const dataState = (await this.locator.getAttribute("data-state")) ?? "";
-    const ds = dataState.toLowerCase();
-    if (ds === "on") return "on";
-    if (ds === "off") return "off";
-    if (ds === "mixed" || ds === "indeterminate") return "mixed";
+    // 3. data-state (common in component libraries: Headless UI, Radix, etc.)
+    const dataState = (
+      await this.locator.getAttribute("data-state")
+    )?.toLowerCase();
+    if (dataState === "on") return "on";
+    if (dataState === "off") return "off";
+    if (dataState === "mixed" || dataState === "indeterminate") return "mixed";
 
-    // 4) checked property (input[type="checkbox"] backing)
-    const jsChecked = await this.locator.evaluate((el) => {
-      const any = el as any;
-      if (typeof any.checked === "boolean") {
-        return any.checked;
-      }
-      return null;
+    // 4. checked property (native checkbox fallback)
+    const jsChecked = await this.locator.evaluate<boolean | null>((el) => {
+      const input = el as HTMLInputElement;
+      return typeof input.checked === "boolean" ? input.checked : null;
     });
 
     if (jsChecked === true) return "on";
     if (jsChecked === false) return "off";
 
-    // 5) Fallback
+    // 5. Could not determine
     return "unknown";
   }
 
-  /** Convenience: is the toggle in the ON state? */
+  /**
+   * Convenience method: Checks if toggle is in the ON state.
+   *
+   * @returns `true` if state is "on"
+   */
   async isOn(): Promise<boolean> {
-    const state = await this.getState();
-    return state === "on";
+    return (await this.getState()) === "on";
   }
 
-  /** Convenience: is the toggle in the OFF state? */
+  /**
+   * Convenience method: Checks if toggle is in the OFF state.
+   *
+   * @returns `true` if state is "off"
+   */
   async isOff(): Promise<boolean> {
-    const state = await this.getState();
-    return state === "off";
+    return (await this.getState()) === "off";
   }
 
-  /** Convenience: is the toggle in a MIXED/indeterminate state? */
+  /**
+   * Convenience method: Checks if toggle is in MIXED / indeterminate state.
+   *
+   * @returns `true` if state is "mixed"
+   */
   async isMixed(): Promise<boolean> {
-    const state = await this.getState();
-    return state === "mixed";
+    return (await this.getState()) === "mixed";
   }
 
   // ───────────────────────────────────────────────────────────────
@@ -153,10 +148,10 @@ export class ToggleBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Click the toggle (generic click).
+   * Performs a generic click on the toggle element.
    *
-   * Most toggles respond to a simple click on their container.
-   * For more complex controls you can override this in a subclass.
+   * @param options - Click options (force, timeout, position, etc.)
+   * @returns this (chainable)
    */
   async click(options?: Parameters<Locator["click"]>[0]): Promise<this> {
     await this.locator.click(options);
@@ -164,9 +159,10 @@ export class ToggleBase extends ElementBase {
   }
 
   /**
-   * Toggle the control once (simple click).
+   * Toggles the control by clicking it (semantic alias for `click()`).
    *
-   * Alias for click(), but semantically clearer in tests.
+   * @param options - Click options
+   * @returns this (chainable)
    */
   async toggle(options?: Parameters<Locator["click"]>[0]): Promise<this> {
     await this.click(options);
@@ -174,23 +170,25 @@ export class ToggleBase extends ElementBase {
   }
 
   /**
-   * Ensure the toggle ends in ON state (idempotent).
+   * Ensures the toggle is ON (idempotent).
    *
-   * - If state is already "on", does nothing.
-   * - Otherwise performs click() and re-checks state.
+   * - If already ON → does nothing
+   * - Otherwise clicks and verifies final state
+   *
+   * @param options - Click options
+   * @returns this (chainable)
+   * @throws Error if state is not "on" after click
    */
   async toggleOn(options?: Parameters<Locator["click"]>[0]): Promise<this> {
-    if (await this.isOn()) {
-      return this;
-    }
+    if (await this.isOn()) return this;
 
     await this.click(options);
 
-    // Re-check and throw if still not ON (helps catch wiring issues).
     const finalState = await this.getState();
     if (finalState !== "on") {
       throw new Error(
-        `ToggleBase.toggleOn(): expected state "on" after click, but got "${finalState}".`
+        `toggleOn() failed: expected "on" after click, got "${finalState}". ` +
+          `Check toggle implementation or locator.`,
       );
     }
 
@@ -198,22 +196,22 @@ export class ToggleBase extends ElementBase {
   }
 
   /**
-   * Ensure the toggle ends in OFF state (idempotent).
+   * Ensures the toggle is OFF (idempotent).
    *
-   * - If state is already "off", does nothing.
-   * - Otherwise performs click() and re-checks state.
+   * @param options - Click options
+   * @returns this (chainable)
+   * @throws Error if state is not "off" after click
    */
   async toggleOff(options?: Parameters<Locator["click"]>[0]): Promise<this> {
-    if (await this.isOff()) {
-      return this;
-    }
+    if (await this.isOff()) return this;
 
     await this.click(options);
 
     const finalState = await this.getState();
     if (finalState !== "off") {
       throw new Error(
-        `ToggleBase.toggleOff(): expected state "off" after click, but got "${finalState}".`
+        `toggleOff() failed: expected "off" after click, got "${finalState}". ` +
+          `Check toggle implementation or locator.`,
       );
     }
 
@@ -221,7 +219,9 @@ export class ToggleBase extends ElementBase {
   }
 
   /**
-   * Focus the toggle.
+   * Focuses the toggle (useful for accessibility testing).
+   *
+   * @returns this (chainable)
    */
   async focus(): Promise<this> {
     await this.locator.focus();
@@ -229,7 +229,9 @@ export class ToggleBase extends ElementBase {
   }
 
   /**
-   * Blur the toggle (remove focus).
+   * Removes focus from the toggle.
+   *
+   * @returns this (chainable)
    */
   async blur(): Promise<this> {
     await this.locator.blur();
@@ -237,23 +239,51 @@ export class ToggleBase extends ElementBase {
   }
 
   /**
-   * Press a key while the toggle is focused (e.g., "Space" or "Enter").
+   * Presses Space key while focused (standard way to toggle switches).
    *
-   * Useful for validating keyboard accessibility.
+   * @returns this (chainable)
+   */
+  async pressSpaceToToggle(): Promise<this> {
+    await this.focus();
+    await this.locator.press("Space");
+    return this;
+  }
+
+  /**
+   * Presses Enter key while focused (alternative activation method).
+   *
+   * @returns this (chainable)
+   */
+  async pressEnterToToggle(): Promise<this> {
+    await this.focus();
+    await this.locator.press("Enter");
+    return this;
+  }
+
+  /**
+   * Presses any key while the toggle is focused.
+   *
+   * @param key - Key name (e.g. "Space", "Enter")
+   * @param options - Press options
+   * @returns this (chainable)
    */
   async press(
     key: string,
-    options?: Parameters<Locator["press"]>[1]
+    options?: Parameters<Locator["press"]>[1],
   ): Promise<this> {
     await this.locator.press(key, options);
     return this;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Assertions (state + a11y)
+  // Assertions
   // ───────────────────────────────────────────────────────────────
 
-  /** Assert that the toggle is ON. */
+  /**
+   * Asserts the toggle is in the ON state.
+   *
+   * @returns this (chainable)
+   */
   async shouldBeOn(): Promise<this> {
     await expect
       .poll(async () => await this.getState(), { timeout: 10_000 })
@@ -261,7 +291,23 @@ export class ToggleBase extends ElementBase {
     return this;
   }
 
-  /** Assert that the toggle is OFF. */
+  /**
+   * Asserts the toggle is **not** in the ON state.
+   *
+   * @returns this (chainable)
+   */
+  async shouldNotBeOn(): Promise<this> {
+    await expect
+      .poll(async () => await this.getState(), { timeout: 10_000 })
+      .not.toBe("on");
+    return this;
+  }
+
+  /**
+   * Asserts the toggle is in the OFF state.
+   *
+   * @returns this (chainable)
+   */
   async shouldBeOff(): Promise<this> {
     await expect
       .poll(async () => await this.getState(), { timeout: 10_000 })
@@ -269,7 +315,23 @@ export class ToggleBase extends ElementBase {
     return this;
   }
 
-  /** Assert that the toggle is in MIXED state. */
+  /**
+   * Asserts the toggle is **not** in the OFF state.
+   *
+   * @returns this (chainable)
+   */
+  async shouldNotBeOff(): Promise<this> {
+    await expect
+      .poll(async () => await this.getState(), { timeout: 10_000 })
+      .not.toBe("off");
+    return this;
+  }
+
+  /**
+   * Asserts the toggle is in MIXED / indeterminate state.
+   *
+   * @returns this (chainable)
+   */
   async shouldBeMixed(): Promise<this> {
     await expect
       .poll(async () => await this.getState(), { timeout: 10_000 })
@@ -277,9 +339,14 @@ export class ToggleBase extends ElementBase {
     return this;
   }
 
-  /** Assert that the toggle has a specific normalized state. */
+  /**
+   * Asserts the toggle has a specific state.
+   *
+   * @param expected - Expected state
+   * @returns this (chainable)
+   */
   async shouldHaveState(
-    expected: "on" | "off" | "mixed" | "unknown"
+    expected: "on" | "off" | "mixed" | "unknown",
   ): Promise<this> {
     await expect
       .poll(async () => await this.getState(), { timeout: 10_000 })
@@ -287,30 +354,44 @@ export class ToggleBase extends ElementBase {
     return this;
   }
 
-  /** Assert toggle is visible (delegates to ElementBase). */
+  /**
+   * Asserts the toggle is visible (from ElementBase).
+   *
+   * @returns this (chainable)
+   */
   async shouldBeVisible(): Promise<this> {
     await super.shouldBeVisible();
     return this;
   }
 
-  /** Assert toggle is hidden. */
+  /**
+   * Asserts the toggle is hidden.
+   *
+   * @returns this (chainable)
+   */
   async shouldBeHidden(): Promise<this> {
     await super.shouldBeHidden();
     return this;
   }
 
-  /** Assert toggle is focused. */
+  /**
+   * Asserts the toggle is currently focused.
+   *
+   * @returns this (chainable)
+   */
   async shouldBeFocused(): Promise<this> {
     await expect(this.locator).toBeFocused();
     return this;
   }
 
   /**
-   * Assert toggle has role "switch" or "checkbox" (common patterns).
-   * Pass a custom pattern if needed.
+   * Asserts the toggle has an appropriate role (switch or checkbox).
+   *
+   * @param expected - Role or RegExp (default: /^(switch|checkbox)$/i)
+   * @returns this (chainable)
    */
   async shouldHaveRole(
-    expected: string | RegExp = /^(switch|checkbox)$/i
+    expected: string | RegExp = /^(switch|checkbox)$/i,
   ): Promise<this> {
     const role = (await this.locator.getAttribute("role")) ?? "";
     if (expected instanceof RegExp) {
@@ -321,21 +402,36 @@ export class ToggleBase extends ElementBase {
     return this;
   }
 
-  /** Assert toggle has aria-checked with a specific value. */
+  /**
+   * Asserts a specific `aria-checked` value.
+   *
+   * @param expected - Value or RegExp
+   * @returns this (chainable)
+   */
   async shouldHaveAriaChecked(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveAttribute("aria-checked", expected);
     return this;
   }
 
-  /** Assert toggle has a specific accessible name. */
+  /**
+   * Asserts the toggle has the expected accessible name.
+   *
+   * @param expected - Name or RegExp
+   * @returns this (chainable)
+   */
   async shouldHaveAccessibleName(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveAccessibleName(expected);
     return this;
   }
 
-  /** Assert toggle has a specific accessible description. */
+  /**
+   * Asserts the toggle has the expected accessible description.
+   *
+   * @param expected - Description or RegExp
+   * @returns this (chainable)
+   */
   async shouldHaveAccessibleDescription(
-    expected: string | RegExp
+    expected: string | RegExp,
   ): Promise<this> {
     await expect(this.locator).toHaveAccessibleDescription(expected);
     return this;
@@ -345,7 +441,12 @@ export class ToggleBase extends ElementBase {
   // Waiters
   // ───────────────────────────────────────────────────────────────
 
-  /** Wait until the toggle becomes ON. */
+  /**
+   * Waits until the toggle reaches the ON state.
+   *
+   * @param timeout - Max wait time (ms)
+   * @returns this (chainable)
+   */
   async waitUntilOn(timeout = 10_000): Promise<this> {
     await expect
       .poll(async () => await this.getState(), { timeout })
@@ -353,7 +454,12 @@ export class ToggleBase extends ElementBase {
     return this;
   }
 
-  /** Wait until the toggle becomes OFF. */
+  /**
+   * Waits until the toggle reaches the OFF state.
+   *
+   * @param timeout - Max wait time (ms)
+   * @returns this (chainable)
+   */
   async waitUntilOff(timeout = 10_000): Promise<this> {
     await expect
       .poll(async () => await this.getState(), { timeout })
@@ -361,7 +467,12 @@ export class ToggleBase extends ElementBase {
     return this;
   }
 
-  /** Wait until the toggle is visible and enabled (a good "ready" state). */
+  /**
+   * Waits until the toggle is visible and enabled.
+   *
+   * @param timeout - Max wait time (ms)
+   * @returns this (chainable)
+   */
   async waitUntilReady(timeout = 10_000): Promise<this> {
     await this.locator.waitFor({ state: "visible", timeout });
     await expect(this.locator).toBeEnabled({ timeout });

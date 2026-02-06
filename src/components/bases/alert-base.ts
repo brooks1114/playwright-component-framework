@@ -5,62 +5,55 @@ import { ElementBase } from "./element-base";
 /**
  * AlertBase
  * ---------
- * Semantic base class for inline alerts and toast-style notifications.
+ * Semantic, chainable base class for inline alerts, status messages, and toast notifications.
  *
- * Typical patterns:
- *  - Inline error/success banner:
- *      <div role="alert" class="alert alert-error">Something went wrong</div>
+ * Common patterns this class supports:
+ *  - Inline banners: <div role="alert" class="alert alert-error">Error message</div>
+ *  - Live status: <div role="status" aria-live="polite">Item saved</div>
+ *  - Dismissible toasts: <div role="alert" data-testid="toast">Success! <button aria-label="Close">×</button></div>
  *
- *  - Status messages:
- *      <div role="status" aria-live="polite">Saved successfully</div>
+ * Extends ElementBase to inherit:
+ *  - Visibility, text, screenshot, accessibility, scrollIntoView, etc.
  *
- *  - Toast notifications:
- *      <div role="alert" data-testid="toast">
- *        <span>Record created</span>
- *        <button aria-label="Close">×</button>
- *      </div>
+ * Adds alert-specific features:
+ *  - Role / aria-live inspection
+ *  - Severity detection (data-severity or class tokens)
+ *  - Close button handling (semantic + test-id)
+ *  - Message assertions & waiters
  *
- * This class:
- *  - Extends ElementBase (visibility, text, a11y, screenshots, etc.)
- *  - Adds alert-specific helpers:
- *      - role / aria-live inspection
- *      - severity helpers (via class or data-attribute)
- *      - close button helpers
- *      - message assertions & waiters
+ * Preferred construction via ComponentFactory:
+ *   ui.alertByRoleName("Error")
  *
- * Example:
- *   const alert = new AlertBase(
- *     page.getByRole("alert", { name: /could not create matter/i })
- *   );
+ * @example Usage in a test
+ *   const ui = new ComponentFactory(page);
+ *   const errorAlert = ui.alertByRoleName(/could not save/i);
  *
- *   await alert
+ *   await errorAlert
  *     .shouldBeVisible()
- *     .shouldContainMessage(/could not create/i)
- *     .shouldHaveSeverityToken("error")
+ *     .shouldHaveRole("alert")
+ *     .shouldContainMessage("Validation failed")
+ *     .shouldHaveSeverity("error")
  *     .close()
  *     .waitUntilHidden();
  */
 export class AlertBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
-  // Constructors (overloads)
+  // Constructors (overloaded)
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and a selector string that points
-   * at the alert container element.
+   * Construct from Page + selector pointing to the alert container.
    *
    * @example
-   *   const alert = new AlertBase(page, '[role="alert"]');
+   *   new AlertBase(page, '[role="alert"]');
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator.
+   * Construct directly from a Locator (preferred).
    *
    * @example
-   *   const alert = new AlertBase(
-   *     page.getByRole("alert", { name: /Error/i })
-   *   );
+   *   new AlertBase(page.getByRole("alert", { name: /Error/i }));
    */
   constructor(locator: Locator);
 
@@ -73,56 +66,55 @@ export class AlertBase extends ElementBase {
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Getter helpers (role / live region / severity)
+  // ARIA & Severity Getters
   // ───────────────────────────────────────────────────────────────
 
-  /** Get the ARIA role, e.g. "alert", "status". */
+  /**
+   * Get the ARIA role of the alert container (e.g. "alert", "status").
+   *
+   * @returns The role value or null if not set
+   */
   async getRole(): Promise<string | null> {
     return await this.locator.getAttribute("role");
   }
 
-  /** Get the aria-live politeness setting, if any. */
+  /**
+   * Get the aria-live politeness level (e.g. "polite", "assertive").
+   */
   async getAriaLive(): Promise<string | null> {
     return await this.locator.getAttribute("aria-live");
   }
 
-  /** Get the aria-atomic value, if any. */
+  /**
+   * Get aria-atomic value if present ("true" means entire region announced).
+   */
   async getAriaAtomic(): Promise<string | null> {
     return await this.locator.getAttribute("aria-atomic");
   }
 
   /**
-   * Get a generic "severity" signal, trying common patterns:
+   * Detect severity from common patterns:
    *  - data-severity="error|warning|info|success"
-   *  - class tokens containing those strings
+   *  - class names containing "error", "warning", etc.
    *
-   * Returns the first matching severity token, or null if none.
+   * @returns Detected severity or null
+   *
+   * @example
+   *   const sev = await alert.getSeverity(); // "error"
    */
   async getSeverity(): Promise<
     "error" | "warning" | "info" | "success" | null
   > {
     const dataSeverity = await this.locator.getAttribute("data-severity");
-    if (
-      dataSeverity === "error" ||
-      dataSeverity === "warning" ||
-      dataSeverity === "info" ||
-      dataSeverity === "success"
-    ) {
-      return dataSeverity;
+    if (["error", "warning", "info", "success"].includes(dataSeverity ?? "")) {
+      return dataSeverity as "error" | "warning" | "info" | "success";
     }
 
     const classAttr = (await this.locator.getAttribute("class")) ?? "";
-    const tokens = classAttr.split(/\s+/);
+    const tokens = classAttr.toLowerCase().split(/\s+/);
 
-    const known: Array<"error" | "warning" | "info" | "success"> = [
-      "error",
-      "warning",
-      "info",
-      "success",
-    ];
-
-    for (const sev of known) {
-      if (tokens.some((t) => t.toLowerCase().includes(sev))) {
+    for (const sev of ["error", "warning", "info", "success"] as const) {
+      if (tokens.some((t) => t.includes(sev))) {
         return sev;
       }
     }
@@ -130,55 +122,49 @@ export class AlertBase extends ElementBase {
     return null;
   }
 
+  /**
+   * Get the main message text (alias for inherited getText()).
+   */
+  async getMessage(): Promise<string> {
+    return this.getText();
+  }
+
   // ───────────────────────────────────────────────────────────────
-  // Close button helpers
+  // Close Button Handling
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Try to locate a close button inside the alert.
+   * Locator for the close button inside the alert.
+   * Tries multiple reliable patterns (test-id, aria-label, text, role).
    *
-   * Heuristics:
-   *  - [data-testid="alert-close"]
-   *  - role="button" with accessible name matching "Close" (case-insensitive)
-   *  - button[aria-label~="Close"]
-   *
-   * This keeps the tests expressive while staying implementation-agnostic.
+   * Protected so subclasses can override/extend if needed.
    */
   protected get closeButton(): Locator {
-    // Common test-id style hook
-    const testIdCandidate = this.locator.getByTestId("alert-close");
-
-    // Use a composite locator that will work with either:
-    //  - the test-id-based one, or
-    //  - a semantic button with "Close" label
-    const semanticButton = this.locator.getByRole("button", {
-      name: /close/i,
-    });
-
-    // Use a union-style locator: either candidate could resolve elements.
-    // In Playwright, locator("selectorA, selectorB") combines selectors,
-    // but here we're combining two Locators via their underlying selectors
-    // with a best-effort approach.
     return this.locator
-      .locator(
-        '[data-testid="alert-close"], button[aria-label*="Close" i], button:has-text("×")'
-      )
-      .or(semanticButton)
-      .or(testIdCandidate);
+      .locator('[data-testid="alert-close"]')
+      .or(this.locator.getByRole("button", { name: /close/i }))
+      .or(this.locator.locator('button[aria-label*="Close" i]'))
+      .or(this.locator.locator('button:has-text("×"), button:has-text("×")'));
   }
 
   /**
-   * Click the close button if present.
+   * Click the close button to dismiss the alert/toast.
+   * Throws if no close button is found.
    *
-   * Throws a friendly error if no close button can be found.
+   * @param options - Click options (force, timeout, etc.)
+   *
+   * @example
+   *   await alert.close();
    */
   async close(options?: Parameters<Locator["click"]>[0]): Promise<this> {
     const btn = this.closeButton;
+    const count = await btn.count();
 
-    if (await btn.count().then((n) => n === 0)) {
+    if (count === 0) {
       throw new Error(
-        "AlertBase.close(): could not find a close button inside the alert. " +
-          "Consider adding [data-testid='alert-close'] or a button with accessible name 'Close'."
+        "AlertBase.close(): No close button found in alert. " +
+          "Expected one of: [data-testid='alert-close'], button[aria-label*='Close'], " +
+          "or button with text '×'. Add one for dismissible alerts.",
       );
     }
 
@@ -186,79 +172,113 @@ export class AlertBase extends ElementBase {
     return this;
   }
 
+  /**
+   * Assert the alert has a close button (is dismissible).
+   */
+  async shouldBeDismissable(): Promise<this> {
+    await expect(this.closeButton).toBeVisible();
+    return this;
+  }
+
   // ───────────────────────────────────────────────────────────────
-  // Assertions (alert-specific)
+  // Assertions (chainable)
   // ───────────────────────────────────────────────────────────────
 
-  /** Assert the alert is visible. (Delegates to ElementBase behavior.) */
+  /**
+   * Assert alert is visible (inherited from ElementBase).
+   */
   async shouldBeVisible(): Promise<this> {
     await super.shouldBeVisible();
     return this;
   }
 
-  /** Assert the alert is hidden. */
   async shouldBeHidden(): Promise<this> {
     await super.shouldBeHidden();
     return this;
   }
 
-  /** Assert the alert contains specific text. */
+  /**
+   * Assert the alert contains the expected message text.
+   *
+   * @param expected - String or RegExp
+   *
+   * @example
+   *   await alert.shouldContainMessage("Saved successfully");
+   */
   async shouldContainMessage(expected: string | RegExp): Promise<this> {
     await this.shouldContainText(expected);
     return this;
   }
 
-  /** Assert the alert has *exact* text (string or RegExp). */
+  /**
+   * Assert the alert has exactly the expected message.
+   */
   async shouldHaveMessage(expected: string | RegExp): Promise<this> {
     await this.shouldHaveText(expected);
     return this;
   }
 
   /**
-   * Assert the alert has a given ARIA role, e.g. "alert" or "status".
+   * Assert the alert has the specified ARIA role.
+   *
+   * @param expected - e.g. "alert" or /status/i
    */
   async shouldHaveRole(expected: string | RegExp): Promise<this> {
-    const currentRole = await this.getRole();
-    expect(currentRole).not.toBeNull();
+    const role = await this.getRole();
+    expect(role).not.toBeNull();
     if (expected instanceof RegExp) {
-      expect(currentRole as string).toMatch(expected);
+      expect(role!).toMatch(expected);
     } else {
-      expect(currentRole).toBe(expected);
+      expect(role).toBe(expected);
     }
     return this;
   }
 
   /**
-   * Assert that the alert acts like a "live region":
-   *  - role="alert" (assertive), OR
-   *  - aria-live set to "polite" or "assertive"
+   * Assert this is a live region (role="alert" or aria-live set).
    */
   async shouldBeLiveRegion(): Promise<this> {
-    const role = (await this.getRole()) ?? "";
+    const role = ((await this.getRole()) ?? "").toLowerCase();
     const live = ((await this.getAriaLive()) ?? "").toLowerCase();
 
-    const isAlertRole = role.toLowerCase() === "alert";
-    const isLive = live === "polite" || live === "assertive" || live === "rude"; // just in case
+    const isAlert = role === "alert";
+    const isLive = ["polite", "assertive", "rude"].includes(live);
 
-    if (!isAlertRole && !isLive) {
+    if (!isAlert && !isLive) {
       throw new Error(
-        `AlertBase.shouldBeLiveRegion(): expected role="alert" or aria-live="polite|assertive", ` +
-          `but got role="${role}" aria-live="${live}".`
+        `Expected role="alert" or aria-live="polite/assertive", ` +
+          `got role="${role}" aria-live="${live}"`,
       );
     }
-
     return this;
   }
 
   /**
-   * Assert the alert has a particular severity token.
+   * Assert the alert is polite (aria-live="polite").
+   */
+  async shouldBePolite(): Promise<this> {
+    await expect(this.locator).toHaveAttribute("aria-live", "polite");
+    return this;
+  }
+
+  /**
+   * Assert the alert is assertive (role="alert" or aria-live="assertive").
+   */
+  async shouldBeAssertive(): Promise<this> {
+    const role = await this.getRole();
+    if (role?.toLowerCase() === "alert") return this;
+
+    await expect(this.locator).toHaveAttribute("aria-live", "assertive");
+    return this;
+  }
+
+  /**
+   * Assert the alert has the given severity.
    *
-   * We check both:
-   *  - data-severity="error|warning|info|success"
-   *  - class tokens that contain those substrings
+   * @param expected - "error" | "warning" | "info" | "success"
    */
   async shouldHaveSeverity(
-    expected: "error" | "warning" | "info" | "success"
+    expected: "error" | "warning" | "info" | "success",
   ): Promise<this> {
     const severity = await this.getSeverity();
     expect(severity).toBe(expected);
@@ -266,49 +286,51 @@ export class AlertBase extends ElementBase {
   }
 
   /**
-   * Assert the alert's CSS classes or data attributes contain a given token.
+   * Assert severity token present in class or data-severity.
    *
-   * This is the more generic version; useful if your design system uses
-   * tokens like "alert-error", "alert-success", etc.
+   * @param token - e.g. "error", /alert-warning/i
    */
   async shouldHaveSeverityToken(token: string | RegExp): Promise<this> {
     const classAttr = (await this.locator.getAttribute("class")) ?? "";
-    const dataSeverity =
-      (await this.locator.getAttribute("data-severity")) ?? "";
-
-    const combined = `${classAttr} ${dataSeverity}`;
+    const data = (await this.locator.getAttribute("data-severity")) ?? "";
+    const combined = `${classAttr} ${data}`.toLowerCase();
 
     if (token instanceof RegExp) {
       expect(combined).toMatch(token);
     } else {
-      expect(combined.toLowerCase()).toContain(token.toLowerCase());
+      expect(combined).toContain(token.toLowerCase());
     }
-
     return this;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Waiters (alert-specific)
+  // Waiters
   // ───────────────────────────────────────────────────────────────
 
-  /** Wait until alert is visible (shown). */
+  /**
+   * Wait until the alert becomes visible.
+   *
+   * @param timeout - Max wait in ms
+   */
   async waitUntilVisible(timeout = 10_000): Promise<this> {
     await this.locator.waitFor({ state: "visible", timeout });
     return this;
   }
 
-  /** Wait until alert is hidden (dismissed). */
+  /**
+   * Wait until the alert is hidden/dismissed.
+   */
   async waitUntilHidden(timeout = 10_000): Promise<this> {
     await this.locator.waitFor({ state: "hidden", timeout });
     return this;
   }
 
   /**
-   * Wait until the alert's message contains given text/pattern.
+   * Wait until the alert contains the expected message.
    */
   async waitForMessage(
     expected: string | RegExp,
-    timeout = 10_000
+    timeout = 10_000,
   ): Promise<this> {
     await expect(this.locator).toContainText(expected, { timeout });
     return this;

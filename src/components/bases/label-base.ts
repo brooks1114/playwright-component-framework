@@ -5,160 +5,175 @@ import { ElementBase } from "./element-base";
 /**
  * LabelBase
  * ---------
- * Semantic base class for labels/headings/text elements.
+ * Semantic base class for **labels**, **headings**, and **field captions** in a React application.
  *
- * Typical DOM examples:
- *  - <h2>Matter details</h2>
- *  - <h6>Case name</h6>
- *  - <label for="caseName">Case name</label>
- *  - <div class="lm-Body" data-testid="CaseNameLabel">Case name *</div>
+ * Common DOM representations:
+ * - `<label for="...">First name</label>`
+ * - `<h1>`, `<h2>`, `<h3>`, etc. (section titles, form legends)
+ * - `<span>`, `<div>`, or `<p>` used as visual labels (e.g. with `data-testid`, `class="field-label"`)
+ * - Custom components that render text for form fields or sections
  *
- * Design:
- *  - Extends ElementBase, so it inherits all generic element assertions:
- *      - shouldBeVisible, shouldContainText, shouldHaveClass, etc.
- *  - Adds label-specific helpers around "required" indicators and naming.
- *  - Uses Playwright's auto-retrying expect() for assertions.
+ * Extends `ElementBase`, so it inherits:
+ * - `shouldBeVisible()`, `shouldHaveText()`, `shouldContainText()`, `shouldHaveClass()`,
+ *   `shouldHaveAttribute()`, `shouldBeInViewport()`, `waitUntilVisible()`, `screenshot()`, etc.
  *
- * Usage from a Section or Component:
+ * Adds label-specific helpers:
+ * - Detection and assertion of **required field indicators** (ARIA, data attributes, text patterns)
+ * - Expressive text assertions tailored for label usage
  *
- *   const label = new LabelBase(
- *     section.locator.getByRole("heading", { name: "Case name" })
- *   );
+ * @extends ElementBase
  *
- *   await label
- *     .shouldBeVisible()
- *     .shouldIndicateRequired();   // e.g., "Case name *" or aria-required="true"
+ * @example
+ * // Recommended: via ComponentFactory
+ * const $ = new ComponentFactory(page);
+ * const nameLabel = $.labelByText("Full name");
+ *
+ * await nameLabel
+ *   .shouldBeVisible()
+ *   .shouldHaveLabelText("Full name")
+ *   .shouldIndicateRequired();
+ *
+ * @example
+ * // Direct construction
+ * const statusLabel = new LabelBase(
+ *   page.getByRole("heading", { name: "Application Status" })
+ * );
+ * await statusLabel.shouldContainLabelText("Status");
  */
 export class LabelBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
-  // Constructors (overloads)
+  // Constructors
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and a selector string.
+   * Creates a LabelBase from a Page and selector string.
+   *
+   * @param page - Playwright Page instance
+   * @param selector - CSS/XPath/text selector targeting the label/heading
    *
    * @example
-   *   const label = new LabelBase(page, 'label[for="caseName"]');
+   * const label = new LabelBase(page, 'label[for="email"]');
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator (heading/label/text node).
+   * Creates a LabelBase directly from an existing Locator (preferred).
+   *
+   * @param locator - Locator targeting the label, heading, or text element
    *
    * @example
-   *   const label = new LabelBase(
-   *     page.getByRole("heading", { name: "Case name" })
-   *   );
+   * const label = new LabelBase(page.getByText("Date of birth", { exact: true }));
    */
   constructor(locator: Locator);
 
   constructor(pageOrLocator: Page | Locator, selector?: string) {
     if (selector !== undefined) {
-      // Usage: new LabelBase(page, 'label[for="caseName"]')
       super(pageOrLocator as Page, selector);
     } else {
-      // Usage: new LabelBase(page.getByRole('heading', { name: 'Case name' }))
       super(pageOrLocator as Locator);
     }
   }
 
   /**
-   * Expose the underlying Locator for advanced operations.
+   * Returns the underlying Playwright Locator for advanced operations.
+   *
+   * @returns Raw Locator instance
    */
   asLocator(): Locator {
     return this.locator;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Label-specific helpers
+  // Required Field Detection & Helpers
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Heuristic check: does this label *appear* to indicate a required field?
+   * Determines whether this label appears to indicate a required field.
    *
-   * This looks for common patterns:
-   *  - aria-required="true"
-   *  - data-required="true" or data-required present
-   *  - trailing asterisk in the text: "Case name *"
-   *  - "(required)" substring: "Case name (required)"
+   * Detection heuristics (checked in order):
+   * 1. `aria-required="true"` on the label itself
+   * 2. `data-required` attribute present (with or without value, or "true")
+   * 3. Text ends with asterisk (`*`) — common visual convention
+   * 4. Text contains "(required)" (case-insensitive)
    *
-   * NOTE:
-   *  - This does *not* assert. It just returns a boolean.
-   *  - Prefer the assertion helpers for test code:
-   *      await label.shouldIndicateRequired();
+   * @returns `true` if a required indicator is detected, `false` otherwise
+   *
+   * @remarks
+   * This is a **heuristic** check — not authoritative. Some apps may use different patterns.
+   * Use `shouldIndicateRequired()` / `shouldNotIndicateRequired()` for assertions.
    */
   async isRequiredIndicatorPresent(): Promise<boolean> {
-    // ARIA pattern
+    // 1. ARIA required
     const ariaRequired = await this.locator.getAttribute("aria-required");
-    if (ariaRequired?.toLowerCase() === "true") {
-      return true;
-    }
+    if (ariaRequired?.toLowerCase() === "true") return true;
 
-    // data-required pattern (HTML/custom attribute)
+    // 2. data-required attribute (common in custom components)
     const dataRequired = await this.locator.getAttribute("data-required");
-    if (
-      dataRequired !== null &&
-      (dataRequired === "" || dataRequired.toLowerCase() === "true")
-    ) {
-      return true;
+    if (dataRequired !== null) {
+      // presence alone or explicit "true" counts
+      if (dataRequired === "" || dataRequired.toLowerCase() === "true")
+        return true;
     }
 
-    // Text-based patterns (* or "(required)")
+    // 3. Text-based indicators
     const rawText = (await this.locator.textContent()) ?? "";
     const text = rawText.trim();
 
-    // e.g., "Case name *" or "Case name*"
-    if (/\*\s*$/.test(text)) {
-      return true;
-    }
+    // Ends with asterisk (with optional whitespace)
+    if (/\*\s*$/.test(text)) return true;
 
-    // e.g., "Case name (required)"
-    if (/\(required\)/i.test(text)) {
-      return true;
-    }
+    // Contains "(required)" – case-insensitive
+    if (/\(required\)/i.test(text)) return true;
 
     return false;
   }
 
   /**
-   * Assert that the label indicates a required field.
+   * Asserts that the label indicates a required field (using polling for stability).
    *
-   * Uses `isRequiredIndicatorPresent()` under the hood and wraps it
-   * with Playwright's auto-retrying `expect.poll()` so it remains
-   * stable under async UI updates.
+   * @param timeout - Max wait time (ms) – useful when form state changes asynchronously
+   * @returns This instance (for chaining)
    *
    * @example
-   *   await label.shouldIndicateRequired();
+   * await requiredFieldLabel.shouldIndicateRequired();
    */
   async shouldIndicateRequired(timeout = 10_000): Promise<this> {
     await expect
-      .poll(async () => await this.isRequiredIndicatorPresent(), { timeout })
+      .poll(async () => await this.isRequiredIndicatorPresent(), {
+        message: "Expected label to indicate a required field",
+        timeout,
+      })
       .toBe(true);
     return this;
   }
 
   /**
-   * Assert that the label does *not* indicate a required field.
+   * Asserts that the label does **not** indicate a required field.
    *
-   * Inverse of shouldIndicateRequired().
-   *
-   * @example
-   *   await label.shouldNotIndicateRequired();
+   * @param timeout - Max wait time (ms)
+   * @returns This instance (for chaining)
    */
   async shouldNotIndicateRequired(timeout = 10_000): Promise<this> {
     await expect
-      .poll(async () => await this.isRequiredIndicatorPresent(), { timeout })
+      .poll(async () => await this.isRequiredIndicatorPresent(), {
+        message: "Expected label to NOT indicate a required field",
+        timeout,
+      })
       .toBe(false);
     return this;
   }
 
+  // ───────────────────────────────────────────────────────────────
+  // Label-Specific Text Assertions
+  // ───────────────────────────────────────────────────────────────
+
   /**
-   * Assert the label's trimmed text exactly matches the expected value.
+   * Asserts that the label's trimmed text exactly matches the expected value.
    *
-   * This is a thin alias over ElementBase / Locator behavior, but keeps
-   * test code expressive:
+   * Thin wrapper over `ElementBase.shouldHaveText()` with more semantic naming.
    *
-   *   await caseNameLabel.shouldHaveLabelText("Case name");
+   * @param expected - Exact string or RegExp pattern
+   * @returns This instance (for chaining)
    */
   async shouldHaveLabelText(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toHaveText(expected);
@@ -166,10 +181,12 @@ export class LabelBase extends ElementBase {
   }
 
   /**
-   * Assert the label's text contains a substring/pattern.
+   * Asserts that the label's text contains the expected substring or pattern.
    *
-   * Example:
-   *   await label.shouldContainLabelText("Matter details");
+   * Thin wrapper over `ElementBase.shouldContainText()` with semantic naming.
+   *
+   * @param expected - Substring or RegExp to find
+   * @returns This instance (for chaining)
    */
   async shouldContainLabelText(expected: string | RegExp): Promise<this> {
     await expect(this.locator).toContainText(expected);

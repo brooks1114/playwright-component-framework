@@ -1,7 +1,7 @@
 // src/types/matter/matter.schema.ts
 import { z } from "zod";
 import { resolveDateLike, DateLike } from "../../utils/date-utils";
-import { resolveDynamicString } from "../../utils/dynamic-values";
+import { resolveDynamicString } from "../../utils/secure-random-numeric";
 
 // ─────────────────────────────────────────────────────────────
 // Section-level resolved types (what components use today)
@@ -110,7 +110,7 @@ export const matterSchema = z.object({
           role: z.enum(["firstinsureddefendant", "defendant", "plaintiff"]),
           contactName: z.string(),
           comment: z.string().optional(),
-        })
+        }),
       ),
     })
     .optional(),
@@ -171,7 +171,7 @@ export function buildMatterFromFragments(raw: RawMatterFragments): Matter {
       assignedTo: resolveDynamicString(raw.referralDetails.assignedTo),
       group: resolveDynamicString(raw.referralDetails.group),
       triageCompletedDate: resolveDateLike(
-        raw.referralDetails.triageCompletedDate
+        raw.referralDetails.triageCompletedDate,
       ),
     };
 
@@ -179,17 +179,17 @@ export function buildMatterFromFragments(raw: RawMatterFragments): Matter {
     raw.litigationDetails && {
       courtType: resolveDynamicString(raw.litigationDetails.courtType),
       jurisdictionState: resolveDynamicString(
-        raw.litigationDetails.jurisdictionState
+        raw.litigationDetails.jurisdictionState,
       ),
       jurisdictionCounty: resolveDynamicString(
-        raw.litigationDetails.jurisdictionCounty
+        raw.litigationDetails.jurisdictionCounty,
       ),
       serviceDate: resolveDateLike(raw.litigationDetails.serviceDate),
       methodServed: resolveDynamicString(raw.litigationDetails.methodServed),
       filingDate: resolveDateLike(raw.litigationDetails.filingDate),
       extensionIndicator: raw.litigationDetails.extensionIndicator,
       barrierToResolution: resolveDynamicString(
-        raw.litigationDetails.barrierToResolution
+        raw.litigationDetails.barrierToResolution,
       ),
     };
 

@@ -6,35 +6,38 @@ import { LabelBase } from "./label-base";
 /**
  * SectionBase
  * -----------
- * Semantic wrapper for page/card sections.
+ * Semantic scoping wrapper for page sections, cards, panels, form groups, regions, etc.
  *
- * Represents a container element (e.g., card, panel, form section) and
- * provides helpers for working with elements *inside* that section.
+ * Represents a container element (e.g. `<section>`, `<div role="region">`, card wrapper)
+ * and provides **scoped** helpers to locate child elements within it.
  *
  * Design principles:
- *  - This class does NOT call Playwright `expect` directly.
- *  - All assertions are delegated to ElementBase / LabelBase (and friends).
- *  - This keeps SectionBase focused on scoping + element discovery.
+ *  - Does NOT perform assertions (`expect`) itself
+ *  - Delegates assertions to `ElementBase`, `LabelBase`, or more specialized bases
+ *  - Focuses exclusively on **discovery** and **scoping** of child elements
+ *  - Prefers accessibility-first locators (`getByRole`, accessible name) when possible
+ *  - Acts as a clean boundary for ComponentFactory composition
  *
  * Typical usage:
+ * ```ts
+ * const section = new SectionBase(page, "#user-profile-card");
  *
- *   const section = new SectionBase(page, "#matter-details");
+ * await section
+ *   .getHeadingByText("User Profile")
+ *   .shouldBeVisible();
  *
- *   // Get a heading inside the section
- *   const heading = section.getHeadingByText("Matter details");
- *   await heading.shouldBeVisible();
+ * const emailLabel = section.getLabelByText("Email address");
+ * await emailLabel.shouldBeVisible();
  *
- *   // Get a label by text within the section
- *   const caseNameLabel = section.getLabelByText("Case name");
- *   await caseNameLabel.shouldHaveText("Case name");
+ * const saveBtn = section.getElementByRole("button", "Save");
+ * await saveBtn.click();
+ * ```
  *
- *   // Get a generic element by data-testid within the section
- *   const nameDisplay = section.getElementByTestId("MatterName");
- *   await nameDisplay.shouldBeVisible();
- *
- * NOTE:
- *  - If you need more specialized behavior (inputs, dropdowns, etc.),
- *    your ComponentFactory is the preferred entry point.
+ * Recommended entry point: Use via `ComponentFactory`:
+ * ```ts
+ * const $ = new ComponentFactory(page);
+ * const profileSection = $.sectionByTestId("user-profile");
+ * ```
  */
 export class SectionBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
@@ -42,114 +45,162 @@ export class SectionBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and a selector string that points to
-   * the section container.
+   * Construct from a Page and a selector string pointing to the section container.
    *
+   * @param page - Playwright Page instance
+   * @param selector - CSS, XPath, or text selector for the section root
    * @example
-   *   const section = new SectionBase(page, "#matter-details");
+   *   const section = new SectionBase(page, "#account-settings");
+   *   const section = new SectionBase(page, '[data-testid="profile-card"]');
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator pointing at the section.
+   * Construct directly from an existing Locator already pointing to the section.
    *
+   * @param locator - Pre-resolved Locator (preferred for accessibility)
    * @example
    *   const section = new SectionBase(
-   *     page.getByRole("region", { name: "Matter details" })
+   *     page.getByRole("region", { name: "Billing information" })
    *   );
    */
   constructor(locator: Locator);
 
   constructor(pageOrLocator: Page | Locator, selector?: string) {
     if (selector !== undefined) {
-      // Usage: new SectionBase(page, "#matter-details")
       super(pageOrLocator as Page, selector);
     } else {
-      // Usage: new SectionBase(page.getByRole("region", { name: "..." }))
       super(pageOrLocator as Locator);
     }
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Scoped element helpers
+  // Scoped Element Factories
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Get a heading inside the section by accessible name.
+   * Locates a heading (h1–h6) inside this section by its accessible name.
    *
-   * Works for any heading level (h1–h6), relying only on accessible name.
-   *
+   * @param name - Exact or RegExp pattern to match the heading's accessible name
+   * @returns LabelBase wrapping the heading (supports heading assertions)
    * @example
-   *   const heading = section.getHeadingByText("Matter details");
-   *   await heading.shouldBeVisible();
+   *   const title = section.getHeadingByText("Payment Details");
+   *   await title.shouldHaveText("Payment Details");
    */
   getHeadingByText(name: string | RegExp): LabelBase {
-    return new LabelBase(
-      this.locator.getByRole("heading", {
-        name,
-      })
-    );
+    return new LabelBase(this.locator.getByRole("heading", { name }));
   }
 
   /**
-   * Get a label inside the section by its exact/regex text.
+   * Locates a label element (or label-like text) inside the section by its text content.
    *
-   * This is useful for form sections where labels are <label> elements
-   * or headings that act as labels.
+   * Useful for form sections where labels precede inputs.
    *
+   * @param text - Exact or RegExp text to match
+   * @returns LabelBase for assertion and interaction
    * @example
-   *   const label = section.getLabelByText("Case name");
-   *   await label.shouldHaveText("Case name");
+   *   const label = section.getLabelByText("Date of birth");
+   *   await label.shouldBeVisible();
    */
   getLabelByText(text: string | RegExp): LabelBase {
     return new LabelBase(this.locator.getByText(text));
   }
 
   /**
-   * Get a generic element inside the section by data-testid.
+   * Locates an element inside the section using its `data-testid` attribute.
    *
+   * Preferred for stable, non-visible test identifiers.
+   *
+   * @param testId - Value of the data-testid attribute
+   * @returns ElementBase for generic assertions and actions
    * @example
-   *   const nameDisplay = section.getElementByTestId("MatterName");
-   *   await nameDisplay.shouldBeVisible();
+   *   const status = section.getElementByTestId("subscription-status");
+   *   await status.shouldHaveText("Active");
    */
   getElementByTestId(testId: string): ElementBase {
     return new ElementBase(this.locator.getByTestId(testId));
   }
 
   /**
-   * Get a generic element inside the section by role and name.
+   * Locates any element inside the section by ARIA role and optional accessible name.
    *
-   * This is useful when you want a11y-first locators but scoped
-   * to the section container.
+   * Accessibility-first way to find buttons, links, regions, etc. within the section.
    *
+   * @param role - ARIA role (button, link, textbox, region, etc.)
+   * @param name - Optional accessible name or RegExp to match
+   * @param options - Additional getByRole options (e.g. { exact: true })
+   * @returns ElementBase wrapping the matched element
    * @example
-   *   const saveButton = section.getElementByRole("button", "Save");
-   *   await saveButton.shouldBeVisible();
+   *   const submit = section.getElementByRole("button", "Submit");
+   *   await submit.click();
    */
   getElementByRole(
     role: Parameters<Locator["getByRole"]>[0],
     name?: string | RegExp,
-    options?: { exact?: boolean }
+    options?: { exact?: boolean },
   ): ElementBase {
     return new ElementBase(
       this.locator.getByRole(role, {
         name,
         exact: options?.exact,
-      } as any)
+      } as any),
     );
   }
 
   /**
-   * Get a generic ElementBase for a descendant selector within this section.
+   * Low-level escape hatch: Locates any descendant using a CSS/XPath selector
+   * relative to this section.
    *
-   * This is a "low-level escape hatch" when you need CSS/xpath inside
-   * the section, but still want ElementBase behavior.
+   * Use only when role/name/testId locators are insufficient.
    *
+   * @param selector - CSS or XPath selector (relative to section)
+   * @returns ElementBase for the matched element
    * @example
-   *   const errorBanner = section.getElement("[data-test='error-banner']");
-   *   await errorBanner.shouldBeVisible();
+   *   const alert = section.getElement(".alert.alert-error");
+   *   await alert.shouldContainText("Invalid input");
    */
   getElement(selector: string): ElementBase {
     return new ElementBase(this.locator.locator(selector));
+  }
+
+  /**
+   * Locates an input, textarea, or select inside the section by its associated label text.
+   *
+   * Very useful in form-heavy sections.
+   *
+   * @param labelText - Text of the label associated with the control
+   * @returns ElementBase (can be further cast to InputBase, SelectBase, etc. in tests)
+   * @example
+   *   const input = section.getInputByLabel("Full name");
+   *   await input.fill("John Doe");
+   */
+  getInputByLabel(labelText: string | RegExp): ElementBase {
+    return new ElementBase(this.locator.getByLabel(labelText));
+  }
+
+  /**
+   * Locates any link inside the section by its visible text or accessible name.
+   *
+   * @param name - Link text or RegExp
+   * @returns ElementBase wrapping the <a> element
+   * @example
+   *   const link = section.getLinkByText("View invoice");
+   *   await link.click();
+   */
+  getLinkByText(name: string | RegExp): ElementBase {
+    return new ElementBase(this.locator.getByRole("link", { name }));
+  }
+
+  /**
+   * Returns all direct children that match a role, useful for counting or iterating.
+   *
+   * @param role - ARIA role to filter by
+   * @returns Array of ElementBase instances
+   */
+  async getAllByRole(
+    role: Parameters<Locator["getByRole"]>[0],
+  ): Promise<ElementBase[]> {
+    const locators = await this.locator.getByRole(role).all();
+    return locators.map((loc) => new ElementBase(loc));
   }
 }

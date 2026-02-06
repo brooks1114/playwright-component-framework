@@ -40,5 +40,6 @@ test("create matter with mixed data sets", async ({ ui }) => {
   await ui.litigationDetailsSection().fillFromData(matter.litigationDetails!);
   await ui.legalPartiesSection().fillFromData(matter.legalParties!);
 
+  await ui.radioByLabel().isChecked();
   // ...assertions...
 });

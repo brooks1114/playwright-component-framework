@@ -5,75 +5,58 @@ import { ElementBase } from "./element-base";
 /**
  * TableBase
  * ---------
- * Chainable base class for tabular data:
+ * Chainable base class for **HTML tables** and **ARIA grids/tables** in React applications.
  *
- *  - Native HTML <table> with <thead>/<tbody>
- *  - ARIA table/grid with role="table" / role="grid"
+ * Supports:
+ * - Native `<table>` with `<thead>`, `<tbody>`, `<th>`, `<td>`
+ * - ARIA patterns: `role="table"`, `role="grid"`, `role="row"`, `role="columnheader"`, `role="cell"`
  *
- * Assumptions:
- *  - Headers are expressed as:
- *      - <thead> <tr> <th|td>...</th|td> </tr> </thead>
- *        OR
- *      - elements with role="columnheader"
- *  - Body rows are:
- *      - <tbody> <tr>...</tr> </tbody>
- *        OR
- *      - elements with role="row" (for ARIA grid)
- *  - Cells within rows are:
- *      - <td> / <th>
- *      - OR elements with role="cell"
+ * Extends `ElementBase`, so inherits:
+ * - visibility, enabled, text, attribute, screenshot, accessibility assertions, etc.
  *
- * Design:
- *  - Extends ElementBase so it inherits:
- *      - visibility, text, viewport, a11y assertions, screenshots, etc.
- *  - Adds table-specific helpers:
- *      - Header & row introspection
- *      - Cell read helpers
- *      - Row lookup by header+cell text
- *      - Row-level action helpers (buttons/links inside a row)
+ * Main capabilities:
+ * - Header & row introspection
+ * - Cell text extraction (single cell, row, entire table)
+ * - Row lookup by column header + cell content
+ * - Actions inside rows (click buttons/links)
+ * - Assertions & waiters for shape, content, and count
  *
- * Example:
- *   const table = new TableBase(
- *     page.getByRole("table", { name: "Search results" })
- *   );
+ * @extends ElementBase
  *
- *   const headers = await table.getHeaderTexts(); // ["Case", "Type", "Status", "Actions"]
+ * @example
+ * // Recommended: via ComponentFactory
+ * const $ = new ComponentFactory(page);
+ * const resultsTable = $.tableByRole("User list");
  *
- *   const rowIndex = await table.findRowIndexByCellText(
- *     "Case",
- *     "Matter 0003"
- *   );
+ * await resultsTable
+ *   .shouldHaveHeaders(["ID", "Name", "Email", "Status"])
+ *   .shouldHaveRowCount(15)
+ *   .clickActionInRow("Name", "John Doe", "Edit");
  *
- *   await table.clickActionInRow(
- *     "Case",
- *     "Matter 0003",
- *     "Open" // button/link accessible name
- *   );
- *
- *   await table.shouldHaveHeaders(["Case", "Type", "Status", "Actions"]);
- *   await table.shouldHaveRowCount(10);
+ * @example
+ * // Direct construction
+ * const invoices = new TableBase(
+ *   page.getByRole("table", { name: /Pending Invoices/ })
+ * );
+ * const headers = await invoices.getHeaderTexts();
  */
 export class TableBase extends ElementBase {
   // ───────────────────────────────────────────────────────────────
-  // Constructors (overloads)
+  // Constructors
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Construct from a Page and a selector string that points at the table
-   * or grid container.
+   * Creates a TableBase from a Page and selector string targeting the table/grid container.
    *
-   * @example
-   *   const table = new TableBase(page, "table#results");
+   * @param page - Playwright Page instance
+   * @param selector - CSS/XPath selector (e.g. "table#data", "[role='grid']")
    */
   constructor(page: Page, selector: string);
 
   /**
-   * Construct directly from an existing Locator.
+   * Creates a TableBase directly from a pre-resolved Locator.
    *
-   * @example
-   *   const table = new TableBase(
-   *     page.getByRole("grid", { name: "Search results" })
-   *   );
+   * @param locator - Locator pointing to the table or grid element
    */
   constructor(locator: Locator);
 
@@ -86,73 +69,73 @@ export class TableBase extends ElementBase {
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Locators (internal helpers)
+  // Internal Locators (override-friendly)
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Locator for header cells.
-   *
-   * We support both:
-   *  - <thead> based headers (th/td)
-   *  - ARIA columnheaders (role="columnheader")
+   * Locator for all header cells (th, td in thead, or role="columnheader").
+   * Override in subclasses if your grid uses different structure.
    */
-  private get headerCells(): Locator {
+  protected get headerCells(): Locator {
     return this.locator.locator(
       "thead tr:first-of-type th, " +
         "thead tr:first-of-type td, " +
-        "[role='columnheader']"
+        "[role='columnheader']",
     );
   }
 
   /**
-   * Locator for body rows.
-   *
-   * We support both:
-   *  - <tbody> <tr>...</tr>
-   *  - [role="row"] (for ARIA grids)
-   *
-   * NOTE: If your markup has multiple rowgroups, you may later enhance this
-   * to filter by a specific group.
+   * Locator for all body rows (tr in tbody or role="row").
+   * Does not include header rows.
    */
-  private get bodyRows(): Locator {
-    return this.locator.locator("tbody tr, [role='row']");
+  protected get bodyRows(): Locator {
+    return this.locator.locator(
+      "tbody tr, [role='row']:not([role='columnheader'])",
+    );
   }
 
   /**
-   * Locator for cells inside a given row.
+   * Locator for all cells within a specific body row.
    *
-   * We support:
-   *  - <td> / <th>
-   *  - [role="cell"]
+   * @param rowIndex - 0-based index among body rows
    */
-  private cellsInRow(rowIndex: number): Locator {
-    return this.bodyRows.nth(rowIndex).locator("th, td, [role='cell']"); // ordered as in DOM
+  protected cellsInRow(rowIndex: number): Locator {
+    return this.bodyRows.nth(rowIndex).locator("td, th, [role='cell']");
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Header & shape helpers
+  // Shape & Header Helpers
   // ───────────────────────────────────────────────────────────────
 
-  /** Get header texts from the first header row. */
+  /**
+   * Returns the text content of all header cells (trimmed).
+   *
+   * @returns Array of header labels in DOM order
+   */
   async getHeaderTexts(): Promise<string[]> {
     const texts = await this.headerCells.allTextContents();
-    return texts.map((t) => t.trim());
+    return texts.map((t) => (t ?? "").trim());
   }
 
-  /** Get number of header columns. */
+  /**
+   * Returns the number of columns (based on header cells count).
+   */
   async getColumnCount(): Promise<number> {
     return await this.headerCells.count();
   }
 
-  /** Get number of body rows. */
+  /**
+   * Returns the current number of body rows.
+   */
   async getRowCount(): Promise<number> {
     return await this.bodyRows.count();
   }
 
   /**
-   * Find the column index by header text or pattern.
+   * Finds the 0-based column index for a header label or pattern.
    *
-   * @returns 0-based column index, or -1 if not found.
+   * @param header - Exact string or RegExp to match header text
+   * @returns 0-based index, or -1 if not found
    */
   async findColumnIndexByHeader(header: string | RegExp): Promise<number> {
     const headers = await this.getHeaderTexts();
@@ -161,30 +144,32 @@ export class TableBase extends ElementBase {
       const text = headers[i];
       if (header instanceof RegExp) {
         if (header.test(text)) return i;
-      } else {
-        if (text === header) return i;
+      } else if (text === header) {
+        return i;
       }
     }
-
     return -1;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Cell access helpers
+  // Cell & Row Access
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Get a Locator for a specific cell [rowIndex, colIndex].
+   * Returns a Locator for a specific cell at [rowIndex, colIndex].
    *
-   * @param rowIndex 0-based row index (body rows only).
-   * @param colIndex 0-based column index within the row.
+   * @param rowIndex - 0-based body row index
+   * @param colIndex - 0-based column index
    */
   getCellLocator(rowIndex: number, colIndex: number): Locator {
     return this.cellsInRow(rowIndex).nth(colIndex);
   }
 
   /**
-   * Get text from a specific cell [rowIndex, colIndex].
+   * Returns the trimmed text content of a specific cell.
+   *
+   * @param rowIndex - 0-based body row index
+   * @param colIndex - 0-based column index
    */
   async getCellText(rowIndex: number, colIndex: number): Promise<string> {
     const cell = this.getCellLocator(rowIndex, colIndex);
@@ -192,30 +177,51 @@ export class TableBase extends ElementBase {
   }
 
   /**
-   * Get all cell texts for a given row.
+   * Returns all cell texts in a row as an array.
+   *
+   * @param rowIndex - 0-based body row index
    */
   async getRowTexts(rowIndex: number): Promise<string[]> {
     const cells = this.cellsInRow(rowIndex);
     const texts = await cells.allTextContents();
-    return texts.map((t) => t.trim());
+    return texts.map((t) => (t ?? "").trim());
+  }
+
+  /**
+   * Returns the entire table body as a 2D array of strings.
+   * Useful for snapshot comparison or advanced assertions.
+   */
+  async getAllRowTexts(): Promise<string[][]> {
+    const rowCount = await this.getRowCount();
+    const result: string[][] = [];
+
+    for (let i = 0; i < rowCount; i++) {
+      result.push(await this.getRowTexts(i));
+    }
+
+    return result;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Row lookup helpers
+  // Column & Row Resolution
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Resolve a column identifier to its index.
+   * Converts column identifier (index, header text, or RegExp) to 0-based index.
+   * Throws descriptive error if header not found.
    *
-   * - If `column` is a number, it is returned as-is.
-   * - If `column` is text/RegExp, we look up by header text.
-   *
-   * Throws a clear error if the header cannot be found.
+   * @internal
    */
-  private async resolveColumnIndex(
-    column: number | string | RegExp
+  protected async resolveColumnIndex(
+    column: number | string | RegExp,
   ): Promise<number> {
     if (typeof column === "number") {
+      const colCount = await this.getColumnCount();
+      if (column < 0 || column >= colCount) {
+        throw new Error(
+          `Column index ${column} out of bounds (0-${colCount - 1})`,
+        );
+      }
       return column;
     }
 
@@ -223,132 +229,144 @@ export class TableBase extends ElementBase {
     if (index === -1) {
       const headers = await this.getHeaderTexts();
       throw new Error(
-        `TableBase: Could not find column with header ${String(
-          column
-        )}. Available headers: [${headers.join(", ")}]`
+        `Could not find column "${String(column)}". ` +
+          `Available headers: [${headers.map((h) => `"${h}"`).join(", ")}]`,
       );
     }
     return index;
   }
 
   /**
-   * Find the first row index where the specified column's cell
-   * text matches the given value or pattern.
+   * Finds the first body row index where the cell in `column` matches `value`.
    *
-   * @param column Column index or header text/RegExp.
-   * @param value  Exact string or RegExp to match in that column.
-   * @returns 0-based row index, or -1 if not found.
+   * @returns 0-based row index or -1 if not found
    */
   async findRowIndexByCellText(
     column: number | string | RegExp,
-    value: string | RegExp
+    value: string | RegExp,
   ): Promise<number> {
     const colIndex = await this.resolveColumnIndex(column);
     const rowCount = await this.getRowCount();
 
     for (let row = 0; row < rowCount; row++) {
       const cellText = await this.getCellText(row, colIndex);
-
       if (value instanceof RegExp) {
         if (value.test(cellText)) return row;
-      } else {
-        if (cellText === value) return row;
+      } else if (cellText === value) {
+        return row;
       }
     }
-
     return -1;
   }
 
   /**
-   * Get the Locator for the first row where [column, value]
-   * matches. Throws if not found.
+   * Returns Locator for the first row matching the column + value condition.
+   * Throws if no matching row is found.
    */
   async getRowLocatorByCellText(
     column: number | string | RegExp,
-    value: string | RegExp
+    value: string | RegExp,
   ): Promise<Locator> {
     const rowIndex = await this.findRowIndexByCellText(column, value);
     if (rowIndex === -1) {
       throw new Error(
-        `TableBase: No row found where column ${String(
-          column
-        )} matches ${String(value)}`
+        `No row found where column ${String(column)} = ${String(value)}`,
       );
     }
     return this.bodyRows.nth(rowIndex);
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Row-level actions
+  // Row Actions
   // ───────────────────────────────────────────────────────────────
 
   /**
-   * Click a specific cell.
+   * Clicks a specific cell in the table.
+   *
+   * @param rowIndex - 0-based body row index
+   * @param colIndex - 0-based column index
+   * @param options - Click options
    */
   async clickCell(
     rowIndex: number,
     colIndex: number,
-    options?: Parameters<Locator["click"]>[0]
+    options?: Parameters<Locator["click"]>[0],
   ): Promise<this> {
     await this.getCellLocator(rowIndex, colIndex).click(options);
     return this;
   }
 
   /**
-   * Click a button inside a row matched by column header + cell text.
-   *
-   * Common pattern: an Actions column with "Open", "Edit", "Delete" buttons.
-   *
-   * @param column       Column index or header to use for row lookup.
-   * @param value        Cell value to identify the row (string or RegExp).
-   * @param actionName   Accessible name of the button/link to click.
-   * @param options      Click options.
+   * Clicks a button inside the row identified by column + value.
+   * Commonly used for action columns ("View", "Edit", "Delete", etc.).
    */
   async clickActionInRow(
     column: number | string | RegExp,
     value: string | RegExp,
     actionName: string | RegExp,
-    options?: Parameters<Locator["click"]>[0]
+    options?: Parameters<Locator["click"]>[0],
   ): Promise<this> {
     const row = await this.getRowLocatorByCellText(column, value);
-    const action = row.getByRole("button", { name: actionName });
-    await action.click(options);
+    const button = row.getByRole("button", {
+      name: actionName,
+      exact: typeof actionName === "string",
+    });
+    await button.click(options);
     return this;
   }
 
   /**
-   * Click a link inside a row matched by column header + cell text.
+   * Clicks a link inside the row identified by column + value.
    */
   async clickLinkInRow(
     column: number | string | RegExp,
     value: string | RegExp,
     linkName: string | RegExp,
-    options?: Parameters<Locator["click"]>[0]
+    options?: Parameters<Locator["click"]>[0],
   ): Promise<this> {
     const row = await this.getRowLocatorByCellText(column, value);
-    const link = row.getByRole("link", { name: linkName });
+    const link = row.getByRole("link", {
+      name: linkName,
+      exact: typeof linkName === "string",
+    });
     await link.click(options);
     return this;
   }
 
+  /**
+   * Hovers over a specific cell (useful for revealing tooltips, dropdowns, etc.).
+   */
+  async hoverCell(
+    rowIndex: number,
+    colIndex: number,
+    options?: Parameters<Locator["hover"]>[0],
+  ): Promise<this> {
+    await this.getCellLocator(rowIndex, colIndex).hover(options);
+    return this;
+  }
+
   // ───────────────────────────────────────────────────────────────
-  // Assertions (table-specific)
+  // Table Assertions
   // ───────────────────────────────────────────────────────────────
 
-  /** Assert header texts exactly match the expected list (in order). */
+  /**
+   * Asserts that the table headers exactly match the expected list (in order).
+   */
   async shouldHaveHeaders(expected: readonly string[]): Promise<this> {
     await expect(this.headerCells).toHaveText(expected as string[]);
     return this;
   }
 
-  /** Assert table has a specific row count. */
+  /**
+   * Asserts the table has exactly `expected` number of rows.
+   */
   async shouldHaveRowCount(expected: number): Promise<this> {
     await expect.poll(async () => await this.getRowCount()).toBe(expected);
     return this;
   }
 
   /**
-   * Assert table has at least `min` rows.
+   * Asserts the table has at least `min` rows.
    */
   async shouldHaveAtLeastRows(min: number): Promise<this> {
     await expect
@@ -358,35 +376,62 @@ export class TableBase extends ElementBase {
   }
 
   /**
-   * Assert that there exists a row where [column, value] matches.
+   * Asserts the table has zero rows (empty state).
    */
-  async shouldContainRowWhere(
-    column: number | string | RegExp,
-    value: string | RegExp
-  ): Promise<this> {
-    const index = await this.findRowIndexByCellText(column, value);
-    expect(index).not.toBe(-1);
+  async shouldHaveNoRows(): Promise<this> {
+    await expect.poll(async () => await this.getRowCount()).toBe(0);
     return this;
   }
 
   /**
-   * Assert that a specific cell [rowIndex, colIndex] has the expected text.
+   * Asserts that at least one row exists where the column matches the value.
+   */
+  async shouldContainRowWhere(
+    column: number | string | RegExp,
+    value: string | RegExp,
+  ): Promise<this> {
+    const index = await this.findRowIndexByCellText(column, value);
+    expect(
+      index,
+      `No row found with ${String(column)} = ${String(value)}`,
+    ).not.toBe(-1);
+    return this;
+  }
+
+  /**
+   * Asserts that **no row** exists where the column matches the value.
+   */
+  async shouldNotContainRowWhere(
+    column: number | string | RegExp,
+    value: string | RegExp,
+  ): Promise<this> {
+    const index = await this.findRowIndexByCellText(column, value);
+    expect(
+      index,
+      `Found unexpected row with ${String(column)} = ${String(value)}`,
+    ).toBe(-1);
+    return this;
+  }
+
+  /**
+   * Asserts that a specific cell contains the expected text.
    */
   async shouldHaveCellText(
     rowIndex: number,
     colIndex: number,
-    expected: string | RegExp
+    expected: string | RegExp,
   ): Promise<this> {
-    const cell = this.getCellLocator(rowIndex, colIndex);
-    await expect(cell).toHaveText(expected);
+    await expect(this.getCellLocator(rowIndex, colIndex)).toHaveText(expected);
     return this;
   }
 
   // ───────────────────────────────────────────────────────────────
-  // Waiters (for dynamic tables)
+  // Waiters for Dynamic Tables
   // ───────────────────────────────────────────────────────────────
 
-  /** Wait until row count equals the expected number. */
+  /**
+   * Waits until the table has exactly `expected` rows.
+   */
   async waitUntilRowCount(expected: number, timeout = 10_000): Promise<this> {
     await expect
       .poll(async () => await this.getRowCount(), { timeout })
@@ -394,7 +439,9 @@ export class TableBase extends ElementBase {
     return this;
   }
 
-  /** Wait until row count is at least `min`. */
+  /**
+   * Waits until the table has at least `min` rows.
+   */
   async waitUntilRowCountAtLeast(min: number, timeout = 10_000): Promise<this> {
     await expect
       .poll(async () => await this.getRowCount(), { timeout })
@@ -403,12 +450,12 @@ export class TableBase extends ElementBase {
   }
 
   /**
-   * Wait until a row where [column, value] matches appears.
+   * Waits until a row appears matching the column + value condition.
    */
   async waitForRowWhere(
     column: number | string | RegExp,
     value: string | RegExp,
-    timeout = 10_000
+    timeout = 10_000,
   ): Promise<this> {
     await expect
       .poll(async () => await this.findRowIndexByCellText(column, value), {
